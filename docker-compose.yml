@@ -3,7 +3,7 @@ version: '3'
 services:
   postgres_openai:
     container_name: postgres_openai
-    image: postgres:9.6
+    image: postgres:14.6-alpine
     environment:
       POSTGRES_PASSWORD: '${DB_PASS}'
       POSTGRES_USER: '${DB_USER}'
