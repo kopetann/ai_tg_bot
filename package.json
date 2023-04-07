@@ -22,6 +22,8 @@
     "migration:revert": "typeorm migration:revert -d dist/common/datasource.js"
   },
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@nestjs/axios": "^2.0.0",
     "@nestjs/common": "^9.0.0",
     "@nestjs/config": "^2.3.1",
     "@nestjs/core": "^9.0.0",
@@ -29,9 +31,11 @@
     "@nestjs/platform-express": "^9.0.0",
     "@nestjs/swagger": "^6.2.1",
     "@nestjs/typeorm": "^9.0.1",
+    "axios": "^1.3.5",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "crypto": "^1.0.1",
+    "fluent-ffmpeg": "^2.1.2",
     "nestjs-telegraf": "^2.6.3",
     "openai": "^3.2.1",
     "passport-jwt": "^4.0.1",
