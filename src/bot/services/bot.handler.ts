@@ -16,7 +16,7 @@ import { InternalServerErrorException } from '@nestjs/common';
 import * as ffmpeg from 'fluent-ffmpeg';
 import { join } from 'path';
 import * as fs from 'fs';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 
 @Update()
 export class BotHandler {
@@ -91,7 +91,7 @@ export class BotHandler {
     }
   }
 
-  private transcryptAudio(url: string, name: string) {
+  private transcryptAudio(url: string, name: string): Observable<string> {
     const tempName = name + '_' + new Date().getMilliseconds() + '.mp3';
     const file = new Subject<string>();
     try {

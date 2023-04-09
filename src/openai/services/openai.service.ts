@@ -3,6 +3,8 @@ import { MODULE_OPTIONS_TOKEN } from '../definitions/connect.openai.definition';
 import { ConnectOpenAiInterface } from '../interfaces/connect.openai.interface';
 import { Configuration, OpenAIApi } from 'openai';
 import * as fs from 'fs';
+import { ConfigService } from '@nestjs/config';
+import { Config } from '../../common/config';
 
 @Injectable()
 export class OpenAiService {
@@ -11,6 +13,7 @@ export class OpenAiService {
 
   constructor(
     @Inject(MODULE_OPTIONS_TOKEN) private config: ConnectOpenAiInterface,
+    private readonly configService: ConfigService,
   ) {
     this.__config = new Configuration({
       apiKey: config.apiKey,
@@ -20,7 +23,7 @@ export class OpenAiService {
 
   public async makeChatRequest(text: string): Promise<any> {
     return await this.__openai.createChatCompletion({
-      model: 'gpt-3.5-turbo',
+      model: new Config().get('CHATGPT_MODEL') || 'gpt-3.5',
       messages: [{ role: 'user', content: text }],
       // max_tokens: 1000,
     });
