@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { Config } from './common/config';
+import { config } from './common/config';
 import { TelegrafModule } from 'nestjs-telegraf';
 import { BotModule } from './bot/bot.module';
 import { OpenaiModule } from './openai/openai.module';
@@ -12,12 +12,12 @@ import { OpenaiModule } from './openai/openai.module';
     }),
     TelegrafModule.forRootAsync({
       useFactory: () => ({
-        token: new Config().get('BOT_TOKEN'),
+        token: config.get<string>('BOT_TOKEN'),
       }),
     }),
     OpenaiModule.registerAsync({
       useFactory: () => ({
-        apiKey: new Config().get('OPENAI_API_KEY'),
+        apiKey: config.get<string>('OPENAI_API_KEY'),
       }),
     }),
     BotModule,

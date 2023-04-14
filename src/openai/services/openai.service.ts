@@ -4,7 +4,8 @@ import { ConnectOpenAiInterface } from '../interfaces/connect.openai.interface';
 import { Configuration, OpenAIApi } from 'openai';
 import * as fs from 'fs';
 import { ConfigService } from '@nestjs/config';
-import { Config } from '../../common/config';
+import { config } from '../../common/config';
+import { VoiceTranscriptionResponseInterface } from '../interfaces/voice.transcription.response.interface';
 
 @Injectable()
 export class OpenAiService {
@@ -23,18 +24,19 @@ export class OpenAiService {
 
   public async makeChatRequest(text: string): Promise<any> {
     return await this.__openai.createChatCompletion({
-      model: new Config().get('CHATGPT_MODEL') || 'gpt-3.5-turbo',
+      model: config.get('CHATGPT_MODEL') || 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: text }],
       // max_tokens: 1000,
     });
   }
 
-  public async transcribe(file: string): Promise<any> {
+  public async transcribe(file: string): Promise<string> {
     try {
-      return await this.__openai.createTranscription(
-        fs.createReadStream(file) as any,
-        'whisper-1',
-      );
+      return this.__openai
+        .createTranscription(fs.createReadStream(file) as any, 'whisper-1')
+        .then(
+          (response: VoiceTranscriptionResponseInterface) => response.data.text,
+        );
     } catch (e) {
       console.error(e.message);
     }

@@ -48,7 +48,7 @@ export class BotHandler {
       ` 
           <b>Этот бот уже умеет следующее:</b>
           <i>ChatGPT</i>
-          <i>Voice-to-text</i>
+          <i>Voice recognition in chat</i>
           <i>Coming soon...</i>
      `,
       {
@@ -81,8 +81,9 @@ export class BotHandler {
       ctx.sendChatAction('typing');
       const file = await ctx.telegram.getFileLink(ctx.message.voice.file_id);
       this.transcryptAudio(file.href, ctx.message.from.id).subscribe(
-        async (res: any): Promise<void> => {
-          const response = await this.openAiService.makeChatRequest(res.text);
+        async (res: string): Promise<void> => {
+          console.log(res);
+          const response = await this.openAiService.makeChatRequest(res);
           ctx.reply(response.data.choices[0].message.content);
         },
       );
@@ -103,10 +104,12 @@ export class BotHandler {
         .on('exit', () => console.log('Audio recorder exited'))
         .on('close', () => console.log('Audio recorder closed'))
         .on('end', () => {
-          this.openAiService.transcribe(join('temp', tempName)).then((res) => {
-            file.next(res.data);
-            fs.unlinkSync(join('temp', tempName));
-          });
+          this.openAiService
+            .transcribe(join('temp', tempName))
+            .then((res): void => {
+              file.next(res);
+              fs.unlinkSync(join('temp', tempName));
+            });
         })
         .pipe(fs.createWriteStream(join('temp', tempName)));
       return file;
