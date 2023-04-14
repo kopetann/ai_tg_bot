@@ -80,11 +80,15 @@ export class BotHandler {
     try {
       ctx.sendChatAction('typing');
       const file = await ctx.telegram.getFileLink(ctx.message.voice.file_id);
-      this.transcryptAudio(file.href, ctx.message.from.id).subscribe((res) => {
-        ctx.reply(res);
-      });
+      this.transcryptAudio(file.href, ctx.message.from.id).subscribe(
+        async (res: any): Promise<void> => {
+          const response = await this.openAiService.makeChatRequest(res.text);
+          ctx.reply(response.data.choices[0].message.content);
+        },
+      );
     } catch (e) {
       console.error(e);
+      ctx.reply('Извините, что-то сломалось');
     }
   }
 

@@ -23,7 +23,7 @@ export class OpenAiService {
 
   public async makeChatRequest(text: string): Promise<any> {
     return await this.__openai.createChatCompletion({
-      model: new Config().get('CHATGPT_MODEL') || 'gpt-3.5',
+      model: new Config().get('CHATGPT_MODEL') || 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: text }],
       // max_tokens: 1000,
     });
