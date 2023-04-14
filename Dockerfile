@@ -1,10 +1,14 @@
 FROM node:18-alpine
-
+USER root
+RUN apk update
+RUN apk add
+RUN apk add ffmpeg
 USER node
 COPY --chown=node:node package*.json /usr/src/app/
 WORKDIR /usr/src/app/
+
 RUN npm ci
 
 COPY --chown=node:node . /usr/src/app/
 RUN npm run build
-CMD npm run start:prod
+CMD npm run start:dev

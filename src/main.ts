@@ -4,6 +4,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
+import { Config } from './common/config';
 
 (async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -21,5 +22,5 @@ import { join } from 'path';
   app.useStaticAssets(join(__dirname, '..', 'temp'), {
     prefix: '/static',
   });
-  await app.listen(3000);
+  await app.listen(new Config().get('APPLICATION_PORT') ?? 3002);
 })();

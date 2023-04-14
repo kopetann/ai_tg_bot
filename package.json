@@ -13,13 +13,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "migration:sync": "typeorm schema:sync -d dist/common/datasource.js",
-    "migration:create": "typeorm migration:create src/migrations/base",
-    "migration:generate": "typeorm migration:generate -d dist/common/datasource.js src/migrations/base",
-    "migration:show": "typeorm migration:show -d dist/common/datasource.js",
-    "migration:run": "typeorm migration:run -d dist/common/datasource.js",
-    "migration:revert": "typeorm migration:revert -d dist/common/datasource.js"
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",

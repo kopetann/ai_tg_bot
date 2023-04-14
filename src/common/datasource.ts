@@ -4,4 +4,6 @@ import { DataSource } from 'typeorm';
 
 dotenv.config();
 
-export const dataSource = new DataSource(new Config().getTypeOrmConfig());
+export const dataSource: DataSource = new DataSource(
+  new Config().getTypeOrmConfig(),
+);

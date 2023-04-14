@@ -11,7 +11,6 @@ import {
 import { User } from '../../common/decorators/user.decorator';
 import { Markup, Telegraf } from 'telegraf';
 import { OpenAiService } from '../../openai/services/openai.service';
-import { UserService } from '../../users/services/user.service';
 import { InternalServerErrorException } from '@nestjs/common';
 import * as ffmpeg from 'fluent-ffmpeg';
 import { join } from 'path';
@@ -23,7 +22,6 @@ export class BotHandler {
   constructor(
     @InjectBot() private readonly bot: Telegraf,
     private readonly openAiService: OpenAiService,
-    private readonly userService: UserService,
   ) {}
 
   @Start()
@@ -62,8 +60,7 @@ export class BotHandler {
   @Action('balance')
   public async balance(@Ctx() ctx): Promise<void> {
     ctx.sendChatAction('typing');
-    const balance = await this.userService.getBalance('2');
-    await ctx.reply(`Ваш баланс: ${balance}`);
+    await ctx.reply(`Ваш баланс: ${0}`);
   }
 
   @On('sticker')
