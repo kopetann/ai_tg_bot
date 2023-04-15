@@ -1,17 +1,48 @@
-version: '3'
+version: '3.7'
 
 services:
-  backend:
+  postgres_subscription:
+    container_name: postgres_subscription
+    image: postgres:14.6-alpine
+    environment:
+      POSTGRES_PASSWORD: '${DB_PASS}'
+      POSTGRES_USER: '${DB_USER}'
+      POSTGRES_DB: '${DB_NAME}'
+    ports:
+      - '${DB_PORT:-5432}:${DB_PORT}'
+    volumes:
+      - postgres_subscription:/var/lib/postgresql/data
+
+  redis:
+    container_name: redis_subscription
+    image: redis:latest
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis_subscription:/data
+
+  backend_subscription:
+    container_name: subscription_microservice
+    build:
+      context: ./microservices/subscription_service
+    ports:
+      - '${SUBSCRIPTION_MICROSERVICE_PORT:-5000}'
+    volumes:
+      - ./microservices/subscription_service:/app
+      - ./proto:/proto
+    restart: always
+
+  backend_bot:
     container_name: backend_openai
     build:
-      context: .
+      context: ./client
     ports:
-      - '${APPLICATION_PORT:-3000}:3000'
+      - '${BOT_APPLICATION_PORT:-3000}:3000'
     volumes:
-      - type: bind
-        source: ./temp
-        target: /usr/src/static
-    depends_on:
-      - postgres_openai
-      - redis
+      - ./client:/app
+      - ./proto:/proto
     restart: always
+
+volumes:
+  postgres_subscription:
+  redis_subscription:

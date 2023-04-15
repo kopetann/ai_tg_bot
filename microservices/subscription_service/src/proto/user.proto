@@ -1,0 +1,17 @@
+syntax = 'proto3';
+package user;
+
+message User {
+  string id = 1;
+  string subscriptionDate = 2;
+  string requestCount = 3;
+  string userName = 4;
+}
+
+message HasActiveSubscriptionResponse {
+  bool isActive = 1;
+}
+
+message UserRequest {
+  string userName = 1;
+}
