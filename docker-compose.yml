@@ -12,6 +12,7 @@ services:
       - '${DB_PORT:-5432}:${DB_PORT}'
     volumes:
       - postgres_subscription:/var/lib/postgresql/data
+    command: '-p ${DB_PORT}'
 
   redis:
     container_name: redis_subscription
@@ -29,7 +30,7 @@ services:
       - '${SUBSCRIPTION_MICROSERVICE_PORT:-5000}'
     volumes:
       - ./microservices/subscription_service:/app
-      - ./proto:/app/src
+      - ./proto:/app/src/proto
     restart: always
 
   backend_bot:
@@ -40,7 +41,7 @@ services:
       - '${BOT_APPLICATION_PORT:-3000}:3000'
     volumes:
       - ./client:/app
-      - ./proto:/app/src
+      - ./proto:/app/src/proto
     restart: always
 
 volumes:

@@ -15,8 +15,8 @@ class Config {
   public getTypeOrmConfig(): PostgresConnectionOptions {
     return {
       type: 'postgres',
-      host: this.get<string>('DB_HOST', '192.168.0.62'),
-      port: this.get<number>('DB_PORT', 5432),
+      host: this.get<string>('DB_HOST', '0.0.0.0'),
+      port: this.get<number>('DB_PORT', 5434),
       username: this.get<string>('DB_USER'),
       password: this.get<string>('DB_PASS'),
       database: this.get<string>('DB_NAME'),
