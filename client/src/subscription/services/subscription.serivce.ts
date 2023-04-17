@@ -1,8 +1,9 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
-import { map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { SubscriptionServiceClient } from '../../proto/build/subscription_service.pb';
 import {
+  AddSubscriptionRequest,
   AddSubscriptionResponse,
   User,
   UserRequest,
@@ -16,7 +17,7 @@ export class SubscriptionService implements OnModuleInit {
     @Inject('SUBSCRIPTION_SERVICE') private readonly client: ClientGrpc,
   ) {}
 
-  onModuleInit(): any {
+  onModuleInit(): void {
     this.subscriptionService = this.client.getService('SubscriptionService');
   }
 
@@ -26,5 +27,11 @@ export class SubscriptionService implements OnModuleInit {
 
   public removeFreeRequest(extId: number): Observable<AddSubscriptionResponse> {
     return this.subscriptionService.removeOneFreeRequest({ extId });
+  }
+
+  public addSubscription(
+    request: AddSubscriptionRequest,
+  ): Observable<AddSubscriptionResponse> {
+    return this.subscriptionService.addSubscription(request);
   }
 }

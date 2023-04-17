@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { GetUserInterface } from '../interfaces/get.user.interface';
 import { SubscriptionService } from '../../subscription/services/subscription.serivce';
 import { Observable, Subject } from 'rxjs';
-import { AddSubscriptionResponse, User } from "../../proto/build/user.pb";
+import {
+  AddSubscriptionRequest,
+  AddSubscriptionResponse,
+  User,
+} from '../../proto/build/user.pb';
 import { Markup } from 'telegraf';
 
 @Injectable()
@@ -22,8 +26,14 @@ export class UserService {
 Чтобы продолжить общение со мной, пожалуйста, оформи подписку 🙂👍"`;
   }
 
+  public addSubscription(
+    request: AddSubscriptionRequest,
+  ): Observable<AddSubscriptionResponse> {
+    return this.subscriptionService.addSubscription(request);
+  }
+
   public getSubscriptionKeyboard() {
-    return Markup.inlineKeyboard([
+    return Markup.keyboard([
       Markup.button.callback('Неделя - 169 руб', 'week'),
       Markup.button.callback('Месяц - 359 руб.', 'month'),
     ]);

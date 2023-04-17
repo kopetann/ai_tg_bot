@@ -29,7 +29,7 @@ services:
       - '${SUBSCRIPTION_MICROSERVICE_PORT:-5000}'
     volumes:
       - ./microservices/subscription_service:/app
-      - ./proto:/app/proto
+      - ./proto:/app/src
     restart: always
 
   backend_bot:
@@ -40,7 +40,7 @@ services:
       - '${BOT_APPLICATION_PORT:-3000}:3000'
     volumes:
       - ./client:/app
-      - ./proto:/app/proto
+      - ./proto:/app/src
     restart: always
 
 volumes:

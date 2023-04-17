@@ -1,6 +1,4 @@
 import {
-  Action,
-  Command,
   Ctx,
   Hears,
   InjectBot,
@@ -55,26 +53,27 @@ export class BotHandler {
       '\n' +
       ' И многое другое. Поехали 😉';
 
-    await ctx.reply(
-      template,
-      Markup.inlineKeyboard([
-        Markup.button.callback('Подписка', 'subscribe'),
-        Markup.button.callback('Поддержка', 'support', true),
-      ]),
-    );
+    await ctx.reply(template, {
+      parse_mode: 'HTML',
+      ...Markup.keyboard([['Подписка'], ['Поддержка']]),
+    });
   }
 
-  @Command('subscribe')
-  @Action('subscribe')
-  public getAllSubscriptions(@Ctx() ctx: Context): void {
-    ctx.reply('Subscribe');
+  @Hears(['Подписка'])
+  public async sendSubs(@Ctx() ctx: Context) {
+    await ctx.reply('', this.userService.getSubscriptionKeyboard());
   }
 
-  @Hears('h')
-  @UseGuards(UserHasLimitGuard)
-  public hears(@Ctx() ctx: Context): void {
-    this.userService.removeFreeRequest(ctx.from.id).subscribe();
-    ctx.reply('Привет, друг!');
+  @Hears(['Неделя - 169 руб'])
+  public async activateSubs(@Ctx() ctx: Context, @Sender('id') extId: number) {
+    this.userService
+      .addSubscription({
+        date: new Date().getMilliseconds(),
+        extId,
+      })
+      .subscribe((res) => {
+        ctx.reply('ok');
+      });
   }
 
   // @Action('balance')
