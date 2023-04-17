@@ -9,7 +9,7 @@ class Config {
   private configService: ConfigService;
 
   constructor() {
-    this.configService = new ConfigService<Record<string, string>>();
+    this.configService = new ConfigService();
   }
 
   public getTypeOrmConfig(): PostgresConnectionOptions {
