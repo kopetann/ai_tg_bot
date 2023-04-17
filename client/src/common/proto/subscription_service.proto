@@ -1,9 +1,0 @@
-syntax = "proto3";
-import "user.proto";
-package subscription_service;
-
-service SubscriptionService {
-  rpc GetUser(user.UserRequest) returns (user.User);
-  rpc HasActiveSubscription(user.UserRequest) returns (user.HasActiveSubscriptionResponse);
-}
-

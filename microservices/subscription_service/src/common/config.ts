@@ -3,10 +3,11 @@ import { join } from 'path';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { GrpcOptions, Transport } from '@nestjs/microservices';
 import { addReflectionToGrpcConfig } from 'nestjs-grpc-reflection';
-import { GrpcOptionsInterface } from "./interfaces/grpc.options.interface";
+import { GrpcOptionsInterface } from './interfaces/grpc.options.interface';
 
 class Config {
   private configService: ConfigService;
+
   constructor() {
     this.configService = new ConfigService<Record<string, string>>();
   }

@@ -15,7 +15,6 @@ import { join } from 'path';
           protoPath: join(
             __dirname,
             '..',
-            'common',
             'proto',
             'subscription_service.proto',
           ),

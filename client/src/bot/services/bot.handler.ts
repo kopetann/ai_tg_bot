@@ -9,22 +9,25 @@ import {
   Start,
   Update,
 } from 'nestjs-telegraf';
-import { Markup, Telegraf } from 'telegraf';
+import { Context, Markup, Telegraf } from 'telegraf';
 import { OpenAiService } from '../../openai/services/openai.service';
 import {
   InternalServerErrorException,
-  Request,
-  UseInterceptors,
+  UseFilters,
+  UseGuards,
 } from '@nestjs/common';
 import * as ffmpeg from 'fluent-ffmpeg';
 import { join } from 'path';
 import * as fs from 'fs';
 import { Observable, Subject } from 'rxjs';
 import { UserService } from '../../users/services/user.service';
-import { UserInterceptor } from '../../common/interceptors/user.interceptor';
+import { BotsGuard } from '../../common/guards/bots.guard';
+import { TelegrafExceptionFilter } from '../../common/filters/telegraf.exception.filter';
+import { UserHasLimitGuard } from '../../common/guards/user.has.limit.guard';
 
 @Update()
-@UseInterceptors(UserInterceptor)
+@UseGuards(BotsGuard)
+@UseFilters(TelegrafExceptionFilter)
 export class BotHandler {
   constructor(
     @InjectBot() private readonly bot: Telegraf,
@@ -37,7 +40,6 @@ export class BotHandler {
     @Ctx() ctx,
     @Sender('username') username: string,
     @Sender('first_name') firstName: string,
-    @Sender('id') userId: number,
   ): Promise<void> {
     const template =
       `Привет, ${username ?? firstName.trim()}! 😃` +
@@ -57,38 +59,29 @@ export class BotHandler {
       template,
       Markup.inlineKeyboard([
         Markup.button.callback('Подписка', 'subscribe'),
-        Markup.button.callback('Поддержка', 'support'),
+        Markup.button.callback('Поддержка', 'support', true),
       ]),
     );
   }
 
-  @Action('subscribe')
   @Command('subscribe')
-  public async test(@Ctx() ctx): Promise<void> {
-    ctx.sendChatAction('typing');
-    await ctx.reply(
-      ` 
-          <b>Этот бот уже умеет следующее:</b>
-          <i>ChatGPT</i>
-          <i>Voice recognition in chat</i>
-          <i>Coming soon...</i>
-     `,
-      {
-        parse_mode: 'HTML',
-      },
-    );
+  @Action('subscribe')
+  public getAllSubscriptions(@Ctx() ctx: Context): void {
+    ctx.reply('Subscribe');
   }
 
   @Hears('h')
-  public async hears(@Ctx() ctx, @Request() req): Promise<void> {
-    ctx.reply("I'm OK");
+  @UseGuards(UserHasLimitGuard)
+  public hears(@Ctx() ctx: Context): void {
+    this.userService.removeFreeRequest(ctx.from.id).subscribe();
+    ctx.reply('Привет, друг!');
   }
 
-  @Action('balance')
-  public async balance(@Ctx() ctx): Promise<void> {
-    ctx.sendChatAction('typing');
-    await ctx.reply(`Ваш баланс: ${0}`);
-  }
+  // @Action('balance')
+  // public async balance(@Ctx() ctx): Promise<void> {
+  //   ctx.sendChatAction('typing');
+  //   await ctx.reply(`Ваш баланс: ${0}`);
+  // }
 
   @On('sticker')
   public async on(@Ctx() ctx): Promise<void> {
@@ -96,16 +89,20 @@ export class BotHandler {
   }
 
   @On('text')
-  public async onMessage(@Ctx() ctx): Promise<void> {
-    ctx.sendChatAction('typing');
-    const response = await this.openAiService.makeChatRequest(ctx.message.text);
-    while (!response) {
-      ctx.sendChatAction('typing');
-    }
-    await ctx.reply(response.data.choices[0].message.content);
+  @UseGuards(UserHasLimitGuard)
+  public async onMessage(@Ctx() ctx: Context): Promise<void> {
+    const { from } = ctx;
+    await ctx.sendChatAction('typing');
+    return this.openAiService
+      .makeChatRequest(ctx.message['text'])
+      .then((res) => {
+        this.userService.removeFreeRequest(ctx.from.id).subscribe();
+        ctx.reply(res.data.choices[0].message.content);
+      });
   }
 
   @On('voice')
+  @UseGuards(UserHasLimitGuard)
   public async onVoice(@Ctx() ctx): Promise<void> {
     try {
       ctx.sendChatAction('typing');
@@ -113,6 +110,7 @@ export class BotHandler {
       this.transcryptAudio(file.href, ctx.message.from.id).subscribe(
         async (res: string): Promise<void> => {
           const response = await this.openAiService.makeChatRequest(res);
+          this.userService.removeFreeRequest(ctx.from.id).subscribe();
           ctx.reply(response.data.choices[0].message.content);
         },
       );
@@ -123,8 +121,8 @@ export class BotHandler {
   }
 
   private transcryptAudio(url: string, name: string): Observable<string> {
-    const tempName = name + '_' + new Date().getMilliseconds() + '.mp3';
-    const file = new Subject<string>();
+    const tempName: string = name + '_' + new Date().getMilliseconds() + '.mp3';
+    const file: Subject<string> = new Subject<string>();
     try {
       ffmpeg()
         .input(url)

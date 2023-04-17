@@ -1,27 +1,22 @@
-import {
-  CallHandler,
-  ExecutionContext,
-  Injectable,
-  NestInterceptor,
-} from '@nestjs/common';
-import { tap } from 'rxjs/operators';
+import { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
+import { Observable, take } from 'rxjs';
 import { UserService } from '../../users/services/user.service';
-import { UpdateInterface } from '../../bot/interfaces/update.interface';
+import { TelegrafExecutionContext } from 'nestjs-telegraf';
+import { Context } from 'telegraf';
+import { User } from '../../proto/build/user.pb';
 
-@Injectable()
 export class UserInterceptor implements NestInterceptor {
   constructor(private readonly userService: UserService) {}
-
-  async intercept(context: ExecutionContext, next: CallHandler) {
-    const request: UpdateInterface = context.switchToHttp().getRequest().update;
-
-    context.switchToHttp().getRequest().user = await this.userService.getUser({
-      userName: 'yetAnotherFeature',
-    });
-    return next.handle().pipe(
-      tap(() => {
-        return request.user;
-      }),
-    );
+  intercept(context: ExecutionContext, _: CallHandler<any>): Observable<User> {
+    const ctx: TelegrafExecutionContext =
+      TelegrafExecutionContext.create(context);
+    const { from } = ctx.getContext<Context>();
+    return this.userService
+      .getUser({
+        userName: from.username ?? '',
+        name: from.first_name,
+        extId: from.id,
+      })
+      .pipe(take(1));
   }
 }

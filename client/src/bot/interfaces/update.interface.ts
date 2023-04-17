@@ -20,7 +20,7 @@ export interface UpdateInterface {
     entities: Record<string, any>;
   };
   user: {
-    id: string;
+    id: number;
     name: string;
     userName: string;
     subscriptionDate: typeof Date;

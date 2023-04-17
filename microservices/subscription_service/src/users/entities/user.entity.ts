@@ -1,33 +1,42 @@
 import { Column, Entity } from 'typeorm';
 import { CommonEntity } from '../../common/entities/common.entity';
-import { UserRoleEnum } from '../enums/user.role.enum';
+import { config } from '../../common/config';
+import { User, UserRole } from '../../proto/build/user.pb';
 
 @Entity('users')
-export class User extends CommonEntity {
+export class UserEntity extends CommonEntity implements User {
   @Column()
-  userName: string;
+  extId: number;
 
-  @Column()
+  @Column({
+    type: 'varchar',
+  })
   name: string;
+
+  @Column({ nullable: true, type: 'varchar' })
+  userName: string | undefined;
 
   @Column({
     type: 'enum',
-    enum: UserRoleEnum,
-    default: UserRoleEnum.USER,
+    enum: UserRole,
+    default: UserRole.user,
   })
-  role: keyof UserRoleEnum;
+  role: UserRole;
 
   @Column({
     type: 'numeric',
     nullable: true,
   })
-  requestCount: number | null;
+  requestCount: number | undefined;
 
   @Column({
     type: 'interval',
     nullable: true,
   })
-  subscriptionDate: Date | null;
+  subscriptionDate: number | undefined;
 
-  public decrementRequest() {}
+  @Column({
+    default: config.get<number>('MAX_FREE_REQUESTS', 10),
+  })
+  freeRequests: number;
 }

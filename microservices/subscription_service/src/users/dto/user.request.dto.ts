@@ -1,7 +1,13 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class UserRequestDto {
+  @IsNumber()
+  extId: number;
+
   @IsString()
-  @IsNotEmpty()
-  userName: string;
+  name: string;
+
+  @IsString()
+  @IsOptional()
+  userName?: string;
 }
