@@ -29,7 +29,7 @@ class Config {
   public getGrpcOptions(): GrpcOptions {
     return addReflectionToGrpcConfig(
       this.getGrpcOptionsObject({
-        url: this.get('APPLICATION_URL', '0.0.0.0:50051'),
+        url: this.get('GRPC_APPLICATION_URL', '0.0.0.0:50051'),
         protoPath: join(__dirname, '..', 'proto', 'subscription_service.proto'),
         package: 'subscription_service',
       }),

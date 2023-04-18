@@ -24,24 +24,27 @@ services:
 
   backend_subscription:
     container_name: subscription_microservice
+    volumes:
+      - ./microservices/subscription_service:/usr/src/app
+      - ./proto:/usr/src/app/src/proto
+      - ./.env:/usr/src/app/.env
     build:
       context: ./microservices/subscription_service
     ports:
       - '${SUBSCRIPTION_MICROSERVICE_PORT:-5000}'
-    volumes:
-      - ./microservices/subscription_service:/app
-      - ./proto:/app/src/proto
     restart: always
 
   backend_bot:
     container_name: backend_openai
+    volumes:
+      - ./client:/usr/src/app
+      - ./proto:/usr/src/app/src/proto
+      - ./.env:/usr/src/app/.env
     build:
       context: ./client
     ports:
       - '${BOT_APPLICATION_PORT:-3000}:3000'
-    volumes:
-      - ./client:/app
-      - ./proto:/app/src/proto
+
     restart: always
 
 volumes:
