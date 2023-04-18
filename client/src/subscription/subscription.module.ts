@@ -11,7 +11,10 @@ import { join } from 'path';
         name: 'SUBSCRIPTION_SERVICE',
         transport: Transport.GRPC,
         options: {
-          url: config.get('SUBSCRIPTION_MICROSERVICE_URL', '0.0.0.0:50051'),
+          url: config.get<string>(
+            'SUBSCRIPTION_MICROSERVICE_URL',
+            'backend_subscription:50051',
+          ),
           protoPath: join(
             __dirname,
             '..',

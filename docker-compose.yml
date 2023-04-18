@@ -25,8 +25,7 @@ services:
   backend_subscription:
     container_name: subscription_microservice
     volumes:
-      - ./microservices/subscription_service:/usr/src/app
-      - ./proto:/usr/src/app/src/proto
+      - ./proto:/proto
       - ./.env:/usr/src/app/.env
     build:
       context: ./microservices/subscription_service
@@ -37,8 +36,7 @@ services:
   backend_bot:
     container_name: backend_openai
     volumes:
-      - ./client:/usr/src/app
-      - ./proto:/usr/src/app/src/proto
+      - ./proto:/proto
       - ./.env:/usr/src/app/.env
     build:
       context: ./client
