@@ -6,6 +6,7 @@ import { BotModule } from './bot/bot.module';
 import { OpenaiModule } from './openai/openai.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { UserModule } from './users/user.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { UserModule } from './users/user.module';
     BotModule,
     SubscriptionModule,
     UserModule,
+    PaymentModule,
   ],
   controllers: [],
   providers: [],

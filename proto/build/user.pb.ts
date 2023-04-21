@@ -1,5 +1,4 @@
 /* eslint-disable */
-import { Duration } from "./google/protobuf/duration.pb";
 import { Timestamp } from "./google/protobuf/timestamp.pb";
 
 export const protobufPackage = "user";
@@ -11,13 +10,15 @@ export enum UserRole {
 
 export interface User {
   id: string;
+  createdAt?: Timestamp | undefined;
+  deletedAt?: Timestamp | undefined;
+  updatedAt?: Timestamp | undefined;
   extId: number;
   name: string;
   freeRequests: number;
   role: UserRole;
   userName?: string | undefined;
-  requestCount?: number | undefined;
-  subscriptionDate?: number | undefined;
+  subscriptionDate?: string | undefined;
 }
 
 export interface HasActiveSubscriptionResponse {
@@ -36,7 +37,9 @@ export interface ExtIdRequest {
 
 export interface AddSubscriptionRequest {
   extId: number;
-  date: number;
+  name: string;
+  userName?: string | undefined;
+  date: string;
 }
 
 export interface AddPaidRequest {

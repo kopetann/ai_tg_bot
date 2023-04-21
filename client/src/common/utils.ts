@@ -15,4 +15,17 @@ export class Utils {
         });
     });
   }
+
+  static getTimezoneDate(offset = 3, inMilliseconds = false): number | Date {
+    const date = new Date();
+    const gmtDate = new Date(date.getTime() + offset * 60 * 60 * 1000);
+    return inMilliseconds ? gmtDate.getTime() : gmtDate;
+  }
+
+  static dateWithOffsetDays(days: number): Date {
+    let date: number | Date = this.getTimezoneDate();
+    if (typeof date === 'number') date = new Date(date);
+    date.setDate(date.getDate() + days);
+    return date;
+  }
 }

@@ -24,16 +24,10 @@ export class UserEntity extends CommonEntity implements User {
   role: UserRole;
 
   @Column({
-    type: 'numeric',
+    type: 'varchar',
     nullable: true,
   })
-  requestCount: number | undefined;
-
-  @Column({
-    type: 'interval',
-    nullable: true,
-  })
-  subscriptionDate: number | undefined;
+  subscriptionDate: string | undefined;
 
   @Column({
     default: config.get<number>('MAX_FREE_REQUESTS', 10),

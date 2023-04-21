@@ -17,7 +17,7 @@ export const SUBSCRIPTION_SERVICE_PACKAGE_NAME = "subscription_service";
 export interface SubscriptionServiceClient {
   getUser(request: UserRequest, ...rest: any): Observable<User>;
 
-  hasActiveSubscription(request: User, ...rest: any): Observable<HasActiveSubscriptionResponse>;
+  hasActiveSubscription(request: ExtIdRequest, ...rest: any): Observable<HasActiveSubscriptionResponse>;
 
   addSubscription(request: AddSubscriptionRequest, ...rest: any): Observable<AddSubscriptionResponse>;
 
@@ -29,7 +29,7 @@ export interface SubscriptionServiceClient {
 export interface SubscriptionServiceController {
   getUser(request: UserRequest, ...rest: any): Observable<User>;
 
-  hasActiveSubscription(request: User, ...rest: any): Observable<HasActiveSubscriptionResponse>;
+  hasActiveSubscription(request: ExtIdRequest, ...rest: any): Observable<HasActiveSubscriptionResponse>;
 
   addSubscription(request: AddSubscriptionRequest, ...rest: any): Observable<AddSubscriptionResponse>;
 

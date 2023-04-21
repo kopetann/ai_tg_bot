@@ -22,16 +22,19 @@ export class UserHasLimitGuard implements CanActivate {
       .pipe(
         take(1),
         switchMap((user: User): Observable<boolean> => {
+          console.log(new Date(user.subscriptionDate), new Date());
           if (
             Object.keys(UserRole)[user.role] !== 'admin' &&
             ((user.freeRequests < 1 && !user.subscriptionDate) ||
               (user.subscriptionDate &&
                 new Date(user.subscriptionDate) < new Date()))
           ) {
-            fullCtx.reply(
-              this.userService.getRejectTemplate(),
-              this.userService.getSubscriptionKeyboard(),
-            );
+            fullCtx
+              .reply(
+                this.userService.getRejectTemplate(),
+                this.userService.getSubscriptionKeyboard(),
+              )
+              .then((r) => r.text);
             return of(false);
           }
           return of(true);

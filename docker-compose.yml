@@ -24,9 +24,6 @@ services:
 
   backend_subscription:
     container_name: subscription_microservice
-    volumes:
-      - ./proto:/proto
-      - ./.env:/usr/src/app/.env
     build:
       context: ./microservices/subscription_service
     ports:
@@ -35,9 +32,6 @@ services:
 
   backend_bot:
     container_name: backend_openai
-    volumes:
-      - ./proto:/proto
-      - ./.env:/usr/src/app/.env
     build:
       context: ./client
     ports:
@@ -48,3 +42,10 @@ services:
 volumes:
   postgres_subscription:
   redis_subscription:
+  proto_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ./proto
+

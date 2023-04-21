@@ -10,11 +10,10 @@ message User {
   optional google.protobuf.Timestamp updatedAt = 4;
   int64 extId = 5;
   string name = 6;
-  int32 freeRequests = 7;
+  uint32 freeRequests = 7;
   UserRole role = 8;
   optional string userName = 9;
-  optional int64 requestCount = 10;
-  optional google.protobuf.Duration subscriptionDate = 11;
+  optional string subscriptionDate = 10;
 }
 
 message HasActiveSubscriptionResponse {
@@ -38,7 +37,9 @@ message ExtIdRequest {
 
 message AddSubscriptionRequest {
   int32 extId = 1;
-  int32 date = 2;
+  string name = 2;
+  optional string userName = 3;
+  string date = 4;
 }
 
 message AddPaidRequest {

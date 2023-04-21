@@ -20,7 +20,7 @@
     "migration:show": "typeorm migration:show -d dist/common/datasource.js",
     "migration:run": "typeorm migration:run -d dist/common/datasource.js",
     "migration:revert": "typeorm migration:revert -d dist/common/datasource.js",
-    "proto:generate" : "protoc --plugin=node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./src/proto/build -I=./src/proto/ --ts_proto_opt=nestJs=true --ts_proto_opt=fileSuffix=.pb --ts_proto_opt=stringEnums=true --ts_proto_opt=unrecognizedEnum=false --ts_proto_opt=initializeFieldsAsUndefined=false --ts_proto_opt=returnObservable=true --ts_proto_opt=removeEnum\nPrefix=members --ts_proto_opt=useOptionals=repeated --ts_proto_opt=addNestjsRestParameter=true ./src/proto/subscription_service.proto"
+    "proto:generate": "protoc --plugin=node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./src/proto/build -I=./src/proto/ --ts_proto_opt=nestJs=true --ts_proto_opt=fileSuffix=.pb --ts_proto_opt=stringEnums=true --ts_proto_opt=unrecognizedEnum=false --ts_proto_opt=initializeFieldsAsUndefined=false --ts_proto_opt=returnObservable=true --ts_proto_opt=removeEnum\nPrefix=members --ts_proto_opt=useOptionals=repeated --ts_proto_opt=addNestjsRestParameter=true ./src/proto/subscription_service.proto"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.8.14",
@@ -32,6 +32,7 @@
     "@nestjs/platform-express": "^9.0.0",
     "@nestjs/swagger": "^6.3.0",
     "@nestjs/typeorm": "^9.0.1",
+    "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "i": "^0.3.7",
     "nestjs-grpc-reflection": "^0.0.21",

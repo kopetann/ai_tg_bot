@@ -10,6 +10,7 @@ import {
   ExtIdRequest,
   User,
 } from '../../proto/build/user.pb';
+import { log } from "@grpc/grpc-js/build/src/logging";
 
 @Controller()
 export class UserController {
@@ -17,12 +18,11 @@ export class UserController {
 
   @GrpcMethod('SubscriptionService', 'GetUser')
   public getUser(user: UserRequestDto): Observable<User> {
-    // @ts-ignore
-    return this.userService.findOrCreate(user).pipe(tap((res) => {}));
+    return this.userService.findOrCreate(user);
   }
 
   @GrpcMethod('SubscriptionService', 'HasActiveSubscription')
-  public hasActiveSubscription(user: UserRequestDto): Observable<boolean> {
+  public hasActiveSubscription(user: ExtIdRequest): Observable<boolean> {
     return this.userService.hasActiveSubscription(user.extId);
   }
 

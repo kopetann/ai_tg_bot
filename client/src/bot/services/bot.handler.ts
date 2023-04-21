@@ -17,11 +17,14 @@ import {
 import * as ffmpeg from 'fluent-ffmpeg';
 import { join } from 'path';
 import * as fs from 'fs';
-import { Observable, Subject } from 'rxjs';
+import { catchError, Observable, of, Subject } from 'rxjs';
 import { UserService } from '../../users/services/user.service';
 import { BotsGuard } from '../../common/guards/bots.guard';
 import { TelegrafExceptionFilter } from '../../common/filters/telegraf.exception.filter';
 import { UserHasLimitGuard } from '../../common/guards/user.has.limit.guard';
+import { Utils } from '../../common/utils';
+import { PaymentService } from '../../payment/services/payment.service';
+import { PaymentResponseInterface } from '../../payment/interfaces/payment.response.interface';
 
 @Update()
 @UseGuards(BotsGuard)
@@ -31,6 +34,7 @@ export class BotHandler {
     @InjectBot() private readonly bot: Telegraf,
     private readonly openAiService: OpenAiService,
     private readonly userService: UserService,
+    private readonly paymentService: PaymentService,
   ) {}
 
   @Start()
@@ -61,26 +65,66 @@ export class BotHandler {
 
   @Hears(['Подписка'])
   public async sendSubs(@Ctx() ctx: Context) {
-    await ctx.reply('', this.userService.getSubscriptionKeyboard());
+    await ctx.reply('Информация', this.userService.getSubscriptionKeyboard());
   }
 
-  @Hears(['Неделя - 169 руб'])
-  public async activateSubs(@Ctx() ctx: Context, @Sender('id') extId: number) {
-    this.userService
-      .addSubscription({
-        date: new Date().getMilliseconds(),
-        extId,
+  @Hears(['Неделя - 169 руб', 'Месяц - 359 руб'])
+  public activateSubs(
+    @Ctx() ctx: Context,
+    @Sender('id') extId: number,
+    @Sender('username') userName: string,
+    @Sender('first_name') name: string,
+  ) {
+    this.paymentService
+      .createPayment({
+        amount: {
+          value: '169',
+          currency: 'RUB',
+        },
+        metadata: {
+          user_id: extId,
+          date: Utils.dateWithOffsetDays(7).getTime(),
+          name: name,
+          userName: userName ?? '',
+        },
       })
-      .subscribe((res) => {
-        ctx.reply('ok');
+      .pipe(
+        catchError((err: Record<string, any>) => {
+          console.error(err.response.data.description);
+          return of();
+        }),
+      )
+      .subscribe((res: PaymentResponseInterface) => {
+        this.paymentService.checkForStatusUpdate(res.id);
+        ctx.reply(
+          `Пожалуйста, перейдите по ссылке:\n${res.confirmation.confirmation_url}`,
+          {
+            parse_mode: 'HTML',
+          },
+        );
       });
   }
 
-  // @Action('balance')
-  // public async balance(@Ctx() ctx): Promise<void> {
-  //   ctx.sendChatAction('typing');
-  //   await ctx.reply(`Ваш баланс: ${0}`);
-  // }
+  //   return this.userService
+  // .addSubscription(
+  //     {
+  //       date: Utils.dateWithOffsetDays(7).getTime().toString(),
+  //   extId,
+  //   name,
+  //   userName,
+  // },
+  // '169',
+  // )
+  // .pipe(
+  //   catchError((err) => {
+  //     console.error(err);
+  //     if (err.code === 2) ctx.reply(err.details);
+  //     return of();
+  //   }),
+  //   tap((res) => {
+  //     ctx.reply('ok');
+  //   }),
+  // );
 
   @On('sticker')
   public async on(@Ctx() ctx): Promise<void> {

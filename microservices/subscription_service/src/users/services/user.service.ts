@@ -42,22 +42,17 @@ export class UserService {
   }
 
   public findByExtId(extId: number): Observable<UserEntity | null> {
-    const userFetched: Subject<UserEntity | null> =
-      new Subject<UserEntity | null>();
-    from(
+    return from(
       this.userRepository.findOne({
         where: { extId },
       }),
-    ).subscribe((usr: UserEntity | null) => {
-      userFetched.next(usr);
-    });
-    return userFetched.asObservable();
+    );
   }
 
   public createUser(
     user: Pick<UserEntity, 'userName' | 'extId' | 'name'>,
   ): Observable<UserEntity> {
-    const newUser = this.userRepository.create({ ...user });
+    const newUser: UserEntity = this.userRepository.create({ ...user });
     return from(
       this.userRepository.save(newUser).then((savedUser: UserEntity) => {
         return savedUser;
@@ -69,38 +64,34 @@ export class UserService {
     request: AddSubscriptionRequest,
   ): Observable<AddSubscriptionResponse> {
     const { userRepository } = this;
-    return this.findByExtId(request.extId).pipe(
+    return this.findOrCreate(request).pipe(
       switchMap(function (user: UserEntity | null) {
-        if (!user)
-          return of({
-            success: false,
-            message: 'User already has an active subscription',
+        if (!user) throw new RpcException(`User doesn't exist`);
+        if (user.subscriptionDate) {
+          throw new RpcException({
+            status: 'INVALID_PARAMS',
+            message: `Уважаемый ${
+              user.name
+            }, у Вас оформлена подписка до ${new Date(
+              parseInt(user.subscriptionDate),
+            ).toISOString()}`,
           });
-        else if (
-          user.subscriptionDate &&
-          new Date(user.subscriptionDate) > new Date()
-        ) {
-          return of({
-            success: false,
-            message: 'User already has an active subscription',
-          });
-        } else {
-          user.subscriptionDate = new Date(request.date).getMilliseconds();
-          return from(userRepository.save(user)).pipe(
-            map((savedUser: UserEntity) => {
-              return {
-                success: true,
-                message: 'Subscription added successfully',
-              };
-            }),
-            catchError(() => {
-              return of({
-                success: false,
-                message: 'Error updating date',
-              });
-            }),
-          );
         }
+        user.subscriptionDate = request.date;
+        return from(userRepository.save(user)).pipe(
+          map((savedUser: UserEntity) => {
+            return {
+              success: true,
+              message: 'Subscription added successfully',
+            };
+          }),
+          catchError(() => {
+            return of({
+              success: false,
+              message: 'Error updating date',
+            });
+          }),
+        );
       }),
     );
   }
@@ -111,12 +102,9 @@ export class UserService {
         if (!user)
           throw new RpcException(`User with id ${extId} doesn't exist`);
 
-        return (
-          !user.subscriptionDate ||
-          (user.subscriptionDate
-            ? new Date(user.subscriptionDate) > new Date()
-            : false)
-        );
+        return user.subscriptionDate
+          ? new Date(parseInt(user.subscriptionDate)) > new Date()
+          : false;
       }),
     );
   }

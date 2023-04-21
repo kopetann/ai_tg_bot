@@ -1,24 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { GetUserInterface } from '../interfaces/get.user.interface';
-import { SubscriptionService } from '../../subscription/services/subscription.serivce';
-import { Observable, Subject } from 'rxjs';
+import { catchError, Observable, of, switchMap } from 'rxjs';
 import {
   AddSubscriptionRequest,
   AddSubscriptionResponse,
+  HasActiveSubscriptionResponse,
   User,
 } from '../../proto/build/user.pb';
 import { Markup } from 'telegraf';
+import { SubscriptionService } from '../../subscription/services/subscription.serivce';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class UserService {
   constructor(private readonly subscriptionService: SubscriptionService) {}
-
   public getUser(user: GetUserInterface): Observable<User> {
-    const userSubject = new Subject<User>();
-    this.subscriptionService.getUser(user).subscribe((res) => {
-      userSubject.next(res);
-    });
-    return userSubject;
+    return this.subscriptionService.getUser(user);
   }
 
   public getRejectTemplate(): string {
@@ -29,17 +26,36 @@ export class UserService {
   public addSubscription(
     request: AddSubscriptionRequest,
   ): Observable<AddSubscriptionResponse> {
-    return this.subscriptionService.addSubscription(request);
+    return this.subscriptionService.hasActiveSubscription(request.extId).pipe(
+      catchError((err) => {
+        console.error(err);
+        return of();
+      }),
+      switchMap((hasActiveSubscription) => {
+        if (hasActiveSubscription.isActive) {
+          throw new RpcException('Вы уже оформили подписку!');
+        }
+        return this.subscriptionService.addSubscription(request);
+      }),
+    );
   }
 
   public getSubscriptionKeyboard() {
     return Markup.keyboard([
-      Markup.button.callback('Неделя - 169 руб', 'week'),
-      Markup.button.callback('Месяц - 359 руб.', 'month'),
+      [
+        Markup.button.callback('Неделя - 169 руб', 'week'),
+        Markup.button.callback('Месяц - 359 руб.', 'month'),
+      ],
     ]);
   }
 
   public removeFreeRequest(extId: number): Observable<AddSubscriptionResponse> {
     return this.subscriptionService.removeFreeRequest(extId);
+  }
+
+  public hasActiveSubscription(
+    extId: number,
+  ): Observable<HasActiveSubscriptionResponse> {
+    return this.subscriptionService.hasActiveSubscription(extId);
   }
 }

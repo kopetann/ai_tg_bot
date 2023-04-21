@@ -5,6 +5,7 @@ import { config } from '../common/config';
 import { HttpModule } from '@nestjs/axios';
 import { ClientsModule } from '@nestjs/microservices';
 import { UserModule } from '../users/user.module';
+import { PaymentModule } from '../payment/payment.module';
 
 @Module({
   providers: [BotHandler],
@@ -18,6 +19,7 @@ import { UserModule } from '../users/user.module';
     ClientsModule,
     HttpModule,
     UserModule,
+    PaymentModule,
   ],
   controllers: [],
 })

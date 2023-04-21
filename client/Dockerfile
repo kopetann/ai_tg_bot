@@ -5,8 +5,6 @@ RUN apk add
 RUN apk add ffmpeg
 USER node
 WORKDIR /usr/src/app/
-#COPY --chown=node:node package*.json /usr/src/app/
-RUN ls -la .
 COPY --chown=node:node . /usr/src/app/
 RUN npm ci
 RUN npm run build

@@ -5,6 +5,7 @@ import { SubscriptionServiceClient } from '../../proto/build/subscription_servic
 import {
   AddSubscriptionRequest,
   AddSubscriptionResponse,
+  HasActiveSubscriptionResponse,
   User,
   UserRequest,
 } from '../../proto/build/user.pb';
@@ -33,5 +34,11 @@ export class SubscriptionService implements OnModuleInit {
     request: AddSubscriptionRequest,
   ): Observable<AddSubscriptionResponse> {
     return this.subscriptionService.addSubscription(request);
+  }
+
+  public hasActiveSubscription(
+    extId: number,
+  ): Observable<HasActiveSubscriptionResponse> {
+    return this.subscriptionService.hasActiveSubscription({ extId });
   }
 }

@@ -26,7 +26,7 @@ export class OpenAiService {
     return await this.__openai.createChatCompletion({
       model: config.get('CHATGPT_MODEL') || 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: text }],
-      // max_tokens: 1000,
+      max_tokens: config.get<number>('MAX_TOKENS_LENGTH', 1000),
     });
   }
 
