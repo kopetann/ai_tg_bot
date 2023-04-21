@@ -8,9 +8,10 @@ import {
   AddSubscriptionRequest,
   AddSubscriptionResponse,
   ExtIdRequest,
+  HasActiveSubscriptionResponse,
   User,
 } from '../../proto/build/user.pb';
-import { log } from "@grpc/grpc-js/build/src/logging";
+import { log } from '@grpc/grpc-js/build/src/logging';
 
 @Controller()
 export class UserController {
@@ -22,7 +23,9 @@ export class UserController {
   }
 
   @GrpcMethod('SubscriptionService', 'HasActiveSubscription')
-  public hasActiveSubscription(user: ExtIdRequest): Observable<boolean> {
+  public hasActiveSubscription(
+    user: ExtIdRequest,
+  ): Observable<HasActiveSubscriptionResponse> {
     return this.userService.hasActiveSubscription(user.extId);
   }
 
@@ -35,8 +38,8 @@ export class UserController {
 
   @GrpcMethod('SubscriptionService', 'RemoveOneFreeRequest')
   public removeRequest(
-    user: UserRequestDto,
+    extIdRequest: ExtIdRequest,
   ): Observable<AddSubscriptionResponse> {
-    return this.userService.removeRequests(user.extId);
+    return this.userService.removeRequests(extIdRequest.extId);
   }
 }

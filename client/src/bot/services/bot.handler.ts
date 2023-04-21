@@ -17,7 +17,7 @@ import {
 import * as ffmpeg from 'fluent-ffmpeg';
 import { join } from 'path';
 import * as fs from 'fs';
-import { catchError, Observable, of, Subject } from 'rxjs';
+import { catchError, Observable, of, Subject, switchMap } from 'rxjs';
 import { UserService } from '../../users/services/user.service';
 import { BotsGuard } from '../../common/guards/bots.guard';
 import { TelegrafExceptionFilter } from '../../common/filters/telegraf.exception.filter';
@@ -25,6 +25,7 @@ import { UserHasLimitGuard } from '../../common/guards/user.has.limit.guard';
 import { Utils } from '../../common/utils';
 import { PaymentService } from '../../payment/services/payment.service';
 import { PaymentResponseInterface } from '../../payment/interfaces/payment.response.interface';
+import { User } from '../../proto/build/user.pb';
 
 @Update()
 @UseGuards(BotsGuard)
@@ -64,8 +65,36 @@ export class BotHandler {
   }
 
   @Hears(['Подписка'])
-  public async sendSubs(@Ctx() ctx: Context) {
-    await ctx.reply('Информация', this.userService.getSubscriptionKeyboard());
+  public sendSubs(@Ctx() ctx: Context) {
+    return this.userService
+      .getUser({
+        extId: ctx.from.id,
+        userName: ctx.from.username,
+        name: ctx.from.first_name,
+      })
+      .pipe(
+        switchMap((user: User) => {
+          if (
+            !user.subscriptionDate ||
+            new Date(parseInt(user.subscriptionDate)) < new Date()
+          ) {
+            return of(
+              ctx.reply(
+                `Количество запросов ко мне: ${user.freeRequests}\nДля безграничного общения со мной, пожалуйста, оформи подписку 👍`,
+                this.userService.getSubscriptionKeyboard(),
+              ),
+            );
+          }
+          return of(
+            ctx.reply(
+              `Количество запросов ко мне: без ограничений\nДата окончания: ${new Date(
+                parseInt(user.subscriptionDate),
+              )}`,
+              this.userService.getSubscriptionKeyboard(),
+            ),
+          );
+        }),
+      );
   }
 
   @Hears(['Неделя - 169 руб', 'Месяц - 359 руб'])
@@ -104,27 +133,6 @@ export class BotHandler {
         );
       });
   }
-
-  //   return this.userService
-  // .addSubscription(
-  //     {
-  //       date: Utils.dateWithOffsetDays(7).getTime().toString(),
-  //   extId,
-  //   name,
-  //   userName,
-  // },
-  // '169',
-  // )
-  // .pipe(
-  //   catchError((err) => {
-  //     console.error(err);
-  //     if (err.code === 2) ctx.reply(err.details);
-  //     return of();
-  //   }),
-  //   tap((res) => {
-  //     ctx.reply('ok');
-  //   }),
-  // );
 
   @On('sticker')
   public async on(@Ctx() ctx): Promise<void> {

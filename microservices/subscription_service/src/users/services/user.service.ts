@@ -16,6 +16,7 @@ import { RpcException } from '@nestjs/microservices';
 import {
   AddSubscriptionRequest,
   AddSubscriptionResponse,
+  HasActiveSubscriptionResponse,
   UserRole,
 } from '../../proto/build/user.pb';
 
@@ -67,16 +68,6 @@ export class UserService {
     return this.findOrCreate(request).pipe(
       switchMap(function (user: UserEntity | null) {
         if (!user) throw new RpcException(`User doesn't exist`);
-        if (user.subscriptionDate) {
-          throw new RpcException({
-            status: 'INVALID_PARAMS',
-            message: `Уважаемый ${
-              user.name
-            }, у Вас оформлена подписка до ${new Date(
-              parseInt(user.subscriptionDate),
-            ).toISOString()}`,
-          });
-        }
         user.subscriptionDate = request.date;
         return from(userRepository.save(user)).pipe(
           map((savedUser: UserEntity) => {
@@ -96,15 +87,19 @@ export class UserService {
     );
   }
 
-  public hasActiveSubscription(extId: number): Observable<boolean> {
+  public hasActiveSubscription(
+    extId: number,
+  ): Observable<HasActiveSubscriptionResponse> {
     return this.findByExtId(extId).pipe(
       map((user: UserEntity | null) => {
         if (!user)
           throw new RpcException(`User with id ${extId} doesn't exist`);
 
-        return user.subscriptionDate
-          ? new Date(parseInt(user.subscriptionDate)) > new Date()
-          : false;
+        return {
+          isActive: user.subscriptionDate
+            ? new Date(parseInt(user.subscriptionDate)) > new Date()
+            : false,
+        };
       }),
     );
   }
@@ -120,7 +115,7 @@ export class UserService {
           throw new RpcException(`User with id ${extId} doesn't exist`);
         if (
           (user.subscriptionDate &&
-            new Date(user.subscriptionDate) > new Date()) ||
+            new Date(parseInt(user.subscriptionDate)) > new Date()) ||
           user.role === UserRole.admin ||
           user.freeRequests === 0
         ) {

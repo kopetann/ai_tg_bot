@@ -9,6 +9,7 @@ import { AxiosResponse } from 'axios';
 import { PaymentResponseInterface } from '../interfaces/payment.response.interface';
 import { InjectBot } from 'nestjs-telegraf';
 import { Telegraf } from 'telegraf';
+import { HasActiveSubscriptionResponse } from '../../proto/build/user.pb';
 
 @Injectable()
 export class PaymentService {
@@ -29,7 +30,7 @@ export class PaymentService {
     return this.userService
       .hasActiveSubscription(paymentDto.metadata.user_id)
       .pipe(
-        switchMap((hasActiveSubscription) => {
+        switchMap((hasActiveSubscription: HasActiveSubscriptionResponse) => {
           if (hasActiveSubscription.isActive) {
             throw new RpcException('У Вас уже есть подписка!');
           }
@@ -44,7 +45,6 @@ export class PaymentService {
                 },
                 headers: {
                   'Content-Type': 'application/json',
-                  // 'Idempotence-Key': paymentDto.metadata.user_id,
                   'Idempotence-Key': Math.random() * 100,
                 },
               },
@@ -76,19 +76,22 @@ export class PaymentService {
               10000,
             );
           } else if (res.data.status === 'succeeded') {
-            this.userService.addSubscription({
-              extId: res.data.metadata.user_id,
-              date: res.data.metadata.date,
-              name: res.data.metadata.name,
-              userName: res.data.metadata.user_name ?? '',
-            });
+            return this.userService
+              .addSubscription({
+                extId: res.data.metadata.user_id,
+                date: res.data.metadata.date,
+                name: res.data.metadata.name,
+                userName: res.data.metadata.user_name ?? '',
+              })
+              .pipe((res) => {
+                console.log(res);
+                return res;
+              });
           }
           return of(res.data);
         }),
       )
-      .subscribe((res) => {
-        console.log(res);
-      });
+      .subscribe((res) => {});
   }
 
   private returnPaymentCredentials(paymentDto: PaymentDto) {
