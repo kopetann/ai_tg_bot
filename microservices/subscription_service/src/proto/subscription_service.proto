@@ -1,0 +1,11 @@
+syntax = "proto3";
+import "user.proto";
+package subscription_service;
+
+service SubscriptionService {
+  rpc GetUser(user.UserRequest) returns (user.User);
+  rpc HasActiveSubscription(user.ExtIdRequest) returns (user.HasActiveSubscriptionResponse);
+  rpc AddSubscription(user.AddSubscriptionRequest) returns (user.AddSubscriptionResponse);
+  rpc AddPaidRequests(user.User) returns (user.AddSubscriptionResponse);
+  rpc RemoveOneFreeRequest(user.ExtIdRequest) returns (user.AddSubscriptionResponse);
+}

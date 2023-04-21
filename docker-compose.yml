@@ -42,10 +42,4 @@ services:
 volumes:
   postgres_subscription:
   redis_subscription:
-  proto_data:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: ./proto
 

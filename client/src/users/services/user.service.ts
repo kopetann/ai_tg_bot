@@ -14,6 +14,7 @@ import { RpcException } from '@nestjs/microservices';
 @Injectable()
 export class UserService {
   constructor(private readonly subscriptionService: SubscriptionService) {}
+
   public getUser(user: GetUserInterface): Observable<User> {
     return this.subscriptionService.getUser(user);
   }
@@ -43,7 +44,7 @@ export class UserService {
     return Markup.keyboard([
       [
         Markup.button.callback('Неделя - 169 руб', '1'),
-        Markup.button.callback('Месяц - 359 руб.', '2'),
+        Markup.button.callback('Месяц - 359 руб', '2'),
       ],
     ]);
   }

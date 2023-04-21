@@ -2,7 +2,6 @@ import {
   Ctx,
   Hears,
   InjectBot,
-  InlineQuery,
   On,
   Sender,
   Start,
@@ -27,7 +26,6 @@ import { Utils } from '../../common/utils';
 import { PaymentService } from '../../payment/services/payment.service';
 import { PaymentResponseInterface } from '../../payment/interfaces/payment.response.interface';
 import { User } from '../../proto/build/user.pb';
-import { CallbackQueryDecorator } from '../method.decorators/callback.query.decorator';
 
 @Update()
 @UseGuards(BotsGuard)
@@ -66,8 +64,6 @@ export class BotHandler {
     });
   }
 
-  @CallbackQueryDecorator()
-  @InlineQuery(['Подписка', 'month', '1'])
   @Hears(['Подписка'])
   public sendSubs(@Ctx() ctx: Context) {
     return this.userService
@@ -122,7 +118,7 @@ export class BotHandler {
       })
       .pipe(
         catchError((err: Record<string, any>) => {
-          console.error(err.response.data.description);
+          ctx.reply(`${err}`, this.userService.getCommonKeyboard());
           return of();
         }),
       )
