@@ -69,6 +69,11 @@ export class PaymentService {
       .pipe(
         switchMap((res) => {
           if (attempt > 50) {
+            this.bot.telegram.sendMessage(
+              res.data.metadata.user_id,
+              'Ошибка во время проведения оплаты!',
+            );
+            return of(0);
           }
           if (res.data.status === 'pending') {
             setTimeout(
@@ -83,9 +88,13 @@ export class PaymentService {
                 name: res.data.metadata.name,
                 userName: res.data.metadata.user_name ?? '',
               })
-              .pipe((res) => {
-                console.log(res);
-                return res;
+              .pipe((response) => {
+                this.bot.telegram.sendMessage(
+                  res.data.metadata.user_id,
+                  'Оплата была проведена успешно!',
+                  this.userService.getCommonKeyboard(),
+                );
+                return response;
               });
           }
           return of(res.data);

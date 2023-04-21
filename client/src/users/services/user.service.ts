@@ -42,8 +42,17 @@ export class UserService {
   public getSubscriptionKeyboard() {
     return Markup.keyboard([
       [
-        Markup.button.callback('Неделя - 169 руб', 'week'),
-        Markup.button.callback('Месяц - 359 руб.', 'month'),
+        Markup.button.callback('Неделя - 169 руб', '1'),
+        Markup.button.callback('Месяц - 359 руб.', '2'),
+      ],
+    ]);
+  }
+
+  public getCommonKeyboard() {
+    return Markup.keyboard([
+      [
+        Markup.button.callback('Подписка', '1'),
+        Markup.button.callback('Поддержка', '2'),
       ],
     ]);
   }

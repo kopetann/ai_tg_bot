@@ -115,7 +115,7 @@ export class UserService {
           throw new RpcException(`User with id ${extId} doesn't exist`);
         if (
           (user.subscriptionDate &&
-            new Date(parseInt(user.subscriptionDate)) > new Date()) ||
+            new Date(parseInt(user.subscriptionDate)) < new Date()) ||
           user.role === UserRole.admin ||
           user.freeRequests === 0
         ) {

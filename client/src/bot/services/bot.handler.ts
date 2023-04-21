@@ -2,12 +2,13 @@ import {
   Ctx,
   Hears,
   InjectBot,
+  InlineQuery,
   On,
   Sender,
   Start,
   Update,
 } from 'nestjs-telegraf';
-import { Context, Markup, Telegraf } from 'telegraf';
+import { Context, Telegraf } from 'telegraf';
 import { OpenAiService } from '../../openai/services/openai.service';
 import {
   InternalServerErrorException,
@@ -26,6 +27,7 @@ import { Utils } from '../../common/utils';
 import { PaymentService } from '../../payment/services/payment.service';
 import { PaymentResponseInterface } from '../../payment/interfaces/payment.response.interface';
 import { User } from '../../proto/build/user.pb';
+import { CallbackQueryDecorator } from '../method.decorators/callback.query.decorator';
 
 @Update()
 @UseGuards(BotsGuard)
@@ -60,10 +62,12 @@ export class BotHandler {
 
     await ctx.reply(template, {
       parse_mode: 'HTML',
-      ...Markup.keyboard([['Подписка'], ['Поддержка']]),
+      ...this.userService.getCommonKeyboard(),
     });
   }
 
+  @CallbackQueryDecorator()
+  @InlineQuery(['Подписка', 'month', '1'])
   @Hears(['Подписка'])
   public sendSubs(@Ctx() ctx: Context) {
     return this.userService
@@ -78,21 +82,19 @@ export class BotHandler {
             !user.subscriptionDate ||
             new Date(parseInt(user.subscriptionDate)) < new Date()
           ) {
-            return of(
-              ctx.reply(
-                `Количество запросов ко мне: ${user.freeRequests}\nДля безграничного общения со мной, пожалуйста, оформи подписку 👍`,
-                this.userService.getSubscriptionKeyboard(),
-              ),
-            );
-          }
-          return of(
             ctx.reply(
-              `Количество запросов ко мне: без ограничений\nДата окончания: ${new Date(
-                parseInt(user.subscriptionDate),
-              )}`,
+              `Количество запросов ко мне: ${user.freeRequests}\nДля безграничного общения со мной, пожалуйста, оформи подписку 👍`,
               this.userService.getSubscriptionKeyboard(),
-            ),
+            );
+            return of(0);
+          }
+          ctx.reply(
+            `Количество запросов ко мне: без ограничений\nДата окончания: ${new Date(
+              parseInt(user.subscriptionDate),
+            )}`,
+            this.userService.getSubscriptionKeyboard(),
           );
+          return of(0);
         }),
       );
   }
@@ -104,6 +106,7 @@ export class BotHandler {
     @Sender('username') userName: string,
     @Sender('first_name') name: string,
   ) {
+    console.log(ctx.message);
     this.paymentService
       .createPayment({
         amount: {
