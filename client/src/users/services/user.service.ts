@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { GetUserInterface } from '../interfaces/get.user.interface';
 import { catchError, Observable, of, switchMap } from 'rxjs';
 import {
@@ -9,7 +9,6 @@ import {
 } from '../../proto/build/user.pb';
 import { Markup } from 'telegraf';
 import { SubscriptionService } from '../../subscription/services/subscription.serivce';
-import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class UserService {
@@ -33,30 +32,38 @@ export class UserService {
       }),
       switchMap((hasActiveSubscription) => {
         if (hasActiveSubscription.isActive) {
-          throw new RpcException('Вы уже оформили подписку!');
+          throw new UnprocessableEntityException('Вы уже оформили подписку!');
         }
         return this.subscriptionService.addSubscription(request);
       }),
     );
   }
 
+  public createPaymentButton(duration: string) {
+    return Markup.inlineKeyboard([
+      [Markup.button.url('Поддержка', 'https://t.me/okay_ai_chat')],
+    ]);
+  }
+
   public getSubscriptionKeyboard() {
-    return Markup.keyboard([
+    return Markup.inlineKeyboard([
       [
-        Markup.button.callback('Неделя - 169 руб', '1'),
-        Markup.button.callback('Месяц - 359 руб', '2'),
+        Markup.button.callback('Неделя - 169 руб', 'week'),
+        Markup.button.callback('Месяц - 359 руб', 'month'),
       ],
     ]);
   }
 
   public getCommonKeyboard() {
-    return Markup.keyboard([
+    return Markup.inlineKeyboard([
       [
-        Markup.button.callback('Подписка', '1'),
-        Markup.button.callback('Поддержка', '2'),
+        Markup.button.callback('Подписка', 'subscription'),
+        Markup.button.url('Поддержка', 'https://t.me/okay_ai_chat'),
       ],
     ]);
   }
+
+  public getSubscriptionButton(date: string) {}
 
   public removeFreeRequest(extId: number): Observable<AddSubscriptionResponse> {
     return this.subscriptionService.removeFreeRequest(extId);

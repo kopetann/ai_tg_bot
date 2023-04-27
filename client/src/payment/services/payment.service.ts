@@ -91,7 +91,23 @@ export class PaymentService {
               .pipe((response) => {
                 this.bot.telegram.sendMessage(
                   res.data.metadata.user_id,
-                  'Оплата была проведена успешно!',
+                  'Отлично, спасибо, за подписку!\n' +
+                    '\n' +
+                    'Теперь мы можем:\n' +
+                    '\n' +
+                    '  \n' +
+                    '\n' +
+                    '🌟Общаться без ограничений и лимитов\n' +
+                    '\n' +
+                    '⏳Доступ к общению 24/7\n' +
+                    '\n' +
+                    '🤓Запоминать контекст разговора\n' +
+                    '\n' +
+                    '🧑‍💻Решить все технические вопросы при возникновении\n' +
+                    '\n' +
+                    '  \n' +
+                    '\n' +
+                    'Задай мне любой вопрос 🙂👍',
                   this.userService.getCommonKeyboard(),
                 );
                 return response;
@@ -100,7 +116,7 @@ export class PaymentService {
           return of(res.data);
         }),
       )
-      .subscribe((res) => {});
+      .subscribe();
   }
 
   private returnPaymentCredentials(paymentDto: PaymentDto) {

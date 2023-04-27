@@ -1,4 +1,5 @@
 import {
+  Action,
   Ctx,
   Hears,
   InjectBot,
@@ -7,7 +8,7 @@ import {
   Start,
   Update,
 } from 'nestjs-telegraf';
-import { Context, Telegraf } from 'telegraf';
+import { Context, Markup, Telegraf } from 'telegraf';
 import { OpenAiService } from '../../openai/services/openai.service';
 import {
   InternalServerErrorException,
@@ -19,13 +20,14 @@ import { join } from 'path';
 import * as fs from 'fs';
 import { catchError, Observable, of, Subject, switchMap } from 'rxjs';
 import { UserService } from '../../users/services/user.service';
-import { BotsGuard } from '../../common/guards/bots.guard';
-import { TelegrafExceptionFilter } from '../../common/filters/telegraf.exception.filter';
 import { UserHasLimitGuard } from '../../common/guards/user.has.limit.guard';
 import { Utils } from '../../common/utils';
 import { PaymentService } from '../../payment/services/payment.service';
 import { PaymentResponseInterface } from '../../payment/interfaces/payment.response.interface';
 import { User } from '../../proto/build/user.pb';
+import { TelegrafExceptionFilter } from '../../common/filters/telegraf.exception.filter';
+import { BotsGuard } from '../../common/guards/bots.guard';
+import { SubscriptionInterface } from '../interfaces/subscription.interface';
 
 @Update()
 @UseGuards(BotsGuard)
@@ -46,17 +48,17 @@ export class BotHandler {
   ): Promise<void> {
     const template =
       `Привет, ${username ?? firstName.trim()}! 😃` +
+      '\n\n' +
+      'Я твой универсальный помощник на основе ChatGPT 🌟\n' +
       '\n' +
-      ' Я твой универсальный помощник на основе ChatGPT 🌟\n' +
-      '\n' +
-      ' Спроси меня о чем хочешь, я знаю все, например:\n' +
+      'Спроси меня о чем хочешь, я знаю все, например:\n' +
       '\n' +
       '🗣 Расскажи анекдот или историю\n' +
       '📝 Помоги в решении домашнего задания\n' +
       '🍲 Спланируй мне рацион для похудения\n' +
       '🚗 Предложи классный маршрут для путешествия\n' +
       '\n' +
-      ' И многое другое. Поехали 😉';
+      'И многое другое. Поехали 😉';
 
     await ctx.reply(template, {
       parse_mode: 'HTML',
@@ -64,7 +66,66 @@ export class BotHandler {
     });
   }
 
+  @Action(['week', 'month'])
+  @Hears(['Неделя - 169 руб', 'Месяц - 359 руб'])
+  public getSubscriptionInfo(
+    @Ctx() ctx: Record<string, any>,
+    @Sender('id') extId: number,
+    @Sender('username') userName: string,
+    @Sender('first_name') name: string,
+  ) {
+    const subscription: SubscriptionInterface = {
+      word: 'неделю',
+      price: '169',
+      time: ctx.callbackQuery.data,
+      duration: 7,
+    };
+
+    if (ctx.callbackQuery.data === 'month') {
+      subscription.word = 'месяц';
+      subscription.price = '369';
+      subscription.duration = 30;
+    }
+
+    const template = `Подписка на ${subscription.word} общения с ассистентом 🙂\nВходит:\n🌟Неограниченное количество вопросов\n⏳Доступ к общению 24/7\n🧑‍💻Технически поддержу тебя\n💸Удобная оплата`;
+
+    this.paymentService
+      .createPayment({
+        amount: {
+          value: subscription.price,
+          currency: 'RUB',
+        },
+        metadata: {
+          user_id: extId,
+          date: Utils.dateWithOffsetDays(subscription.duration).getTime(),
+          name: name,
+          userName: userName ?? '',
+        },
+      })
+      .pipe(
+        catchError((err: Record<string, any>) => {
+          ctx.reply(`${err}`, this.userService.getCommonKeyboard());
+          return of();
+        }),
+      )
+      .subscribe((res: PaymentResponseInterface) => {
+        this.paymentService.checkForStatusUpdate(res.id);
+        ctx.reply(
+          template,
+          Markup.inlineKeyboard([
+            [
+              Markup.button.url(
+                `Оплатить подписку - ${subscription.price} руб`,
+                res.confirmation.confirmation_url,
+              ),
+            ],
+          ]),
+        );
+      });
+  }
+
   @Hears(['Подписка'])
+  @Action('subscription')
   public sendSubs(@Ctx() ctx: Context) {
     return this.userService
       .getUser({
@@ -85,52 +146,14 @@ export class BotHandler {
             return of(0);
           }
           ctx.reply(
-            `Количество запросов ко мне: без ограничений\nДата окончания: ${new Date(
-              parseInt(user.subscriptionDate),
+            `Количество запросов ко мне: без ограничений\nДата окончания: ${Utils.getFullDate(
+              user.subscriptionDate,
             )}`,
-            this.userService.getSubscriptionKeyboard(),
+            this.userService.getCommonKeyboard(),
           );
           return of(0);
         }),
       );
-  }
-
-  @Hears(['Неделя - 169 руб', 'Месяц - 359 руб'])
-  public activateSubs(
-    @Ctx() ctx: Context,
-    @Sender('id') extId: number,
-    @Sender('username') userName: string,
-    @Sender('first_name') name: string,
-  ) {
-    console.log(ctx.message);
-    this.paymentService
-      .createPayment({
-        amount: {
-          value: '169',
-          currency: 'RUB',
-        },
-        metadata: {
-          user_id: extId,
-          date: Utils.dateWithOffsetDays(7).getTime(),
-          name: name,
-          userName: userName ?? '',
-        },
-      })
-      .pipe(
-        catchError((err: Record<string, any>) => {
-          ctx.reply(`${err}`, this.userService.getCommonKeyboard());
-          return of();
-        }),
-      )
-      .subscribe((res: PaymentResponseInterface) => {
-        this.paymentService.checkForStatusUpdate(res.id);
-        ctx.reply(
-          `Пожалуйста, перейдите по ссылке:\n${res.confirmation.confirmation_url}`,
-          {
-            parse_mode: 'HTML',
-          },
-        );
-      });
   }
 
   @On('sticker')
@@ -141,7 +164,6 @@ export class BotHandler {
   @On('text')
   @UseGuards(UserHasLimitGuard)
   public async onMessage(@Ctx() ctx: Context): Promise<void> {
-    const { from } = ctx;
     await ctx.sendChatAction('typing');
     return this.openAiService
       .makeChatRequest(ctx.message['text'])
@@ -178,8 +200,6 @@ export class BotHandler {
         .input(url)
         .toFormat('mp3')
         .on('error', (error) => console.log(`Encoding Error: ${error.message}`))
-        .on('exit', () => console.log('Audio recorder exited'))
-        .on('close', () => console.log('Audio recorder closed'))
         .on('end', () => {
           this.openAiService
             .transcribe(join('temp', tempName))

@@ -16,6 +16,15 @@ export class Utils {
     });
   }
 
+  static getFullDate(dateTime: number | string): string {
+    const date = new Date(
+      typeof dateTime === 'string' ? parseInt(dateTime) : dateTime,
+    );
+    return `${date.getUTCDate()} ${date.toLocaleDateString('ru', {
+      month: 'long',
+    })} ${date.getFullYear()} ${date.getUTCHours()}:${date.getMinutes()}`;
+  }
+
   static getTimezoneDate(offset = 3, inMilliseconds = false): number | Date {
     const date = new Date();
     const gmtDate = new Date(date.getTime() + offset * 60 * 60 * 1000);
