@@ -5,6 +5,7 @@ import { Configuration, OpenAIApi } from 'openai';
 import * as fs from 'fs';
 import { config } from '../../common/config';
 import { VoiceTranscriptionResponseInterface } from '../interfaces/voice.transcription.response.interface';
+import { RolesInterface } from '../../common/interfaces/roles.interface';
 
 @Injectable()
 export class OpenAiService {
@@ -20,10 +21,10 @@ export class OpenAiService {
     this.__openai = new OpenAIApi(this.__config);
   }
 
-  public async makeChatRequest(text: string): Promise<any> {
-    return await this.__openai.createChatCompletion({
+  public makeChatRequest(messages: RolesInterface[]): Promise<any> {
+    return this.__openai.createChatCompletion({
       model: config.get('CHATGPT_MODEL') || 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: text }],
+      messages,
     });
   }
 

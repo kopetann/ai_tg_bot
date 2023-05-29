@@ -28,6 +28,8 @@ import { User } from '../../proto/build/user.pb';
 import { TelegrafExceptionFilter } from '../../common/filters/telegraf.exception.filter';
 import { BotsGuard } from '../../common/guards/bots.guard';
 import { SubscriptionInterface } from '../interfaces/subscription.interface';
+import { RedisService } from '../../redis/redis.service';
+import { Roles, RolesInterface } from '../../common/interfaces/roles.interface';
 
 @Update()
 @UseGuards(BotsGuard)
@@ -38,6 +40,7 @@ export class BotHandler {
     private readonly openAiService: OpenAiService,
     private readonly userService: UserService,
     private readonly paymentService: PaymentService,
+    private readonly redisService: RedisService,
   ) {}
 
   @Start()
@@ -124,6 +127,47 @@ export class BotHandler {
       });
   }
 
+  private resetUserHistory(userId: number): Promise<void> {
+    return this.redisService.del(userId.toString());
+  }
+
+  private async addToHistoryAndReturn(
+    userId: number,
+    userMessage?: string,
+    botAnswer?: string,
+  ): Promise<RolesInterface[]> {
+    try {
+      let history: RolesInterface[] = await this.redisService.get<
+        RolesInterface[]
+      >(userId.toString());
+
+      if (!history) history = [];
+
+      const content: RolesInterface = { content: '', role: undefined };
+
+      if (
+        (!history.length || history[history.length - 1].role === 'user') &&
+        botAnswer
+      ) {
+        content.role = <Roles>'system';
+        content.content = botAnswer;
+      } else if (
+        (!history.length || history[history.length - 1]?.role === 'system') &&
+        userMessage
+      ) {
+        content.role = <Roles>'user';
+        content.content = userMessage;
+      } else {
+        return history;
+      }
+      history.push(content);
+      await this.redisService.set(userId.toString(), history);
+      return history;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   @Hears(['Подписка'])
   @Action('subscription')
   public sendSubs(@Ctx() ctx: Context) {
@@ -164,13 +208,23 @@ export class BotHandler {
   @On('text')
   @UseGuards(UserHasLimitGuard)
   public async onMessage(@Ctx() ctx: Context): Promise<void> {
-    await ctx.sendChatAction('typing');
-    return this.openAiService
-      .makeChatRequest(ctx.message['text'])
-      .then((res) => {
-        this.userService.removeFreeRequest(ctx.from.id).subscribe();
-        ctx.reply(res.data.choices[0].message.content);
-      });
+    ctx.sendChatAction('typing').then(() => {
+      ctx.sendChatAction('typing');
+    });
+    const history: RolesInterface[] = await this.addToHistoryAndReturn(
+      ctx.from.id,
+      ctx.message['text'],
+    );
+
+    return this.openAiService.makeChatRequest(history).then((res) => {
+      this.userService.removeFreeRequest(ctx.from.id).subscribe();
+      this.addToHistoryAndReturn(
+        ctx.from.id,
+        '',
+        res.data.choices[0].message.content,
+      );
+      ctx.reply(res.data.choices[0].message.content);
+    });
   }
 
   @On('voice')
@@ -181,7 +235,11 @@ export class BotHandler {
       const file = await ctx.telegram.getFileLink(ctx.message.voice.file_id);
       this.transcryptAudio(file.href, ctx.message.from.id).subscribe(
         async (res: string): Promise<void> => {
-          const response = await this.openAiService.makeChatRequest(res);
+          const history: RolesInterface[] = await this.addToHistoryAndReturn(
+            ctx.from.id,
+            res,
+          );
+          const response = await this.openAiService.makeChatRequest(history);
           this.userService.removeFreeRequest(ctx.from.id).subscribe();
           ctx.reply(response.data.choices[0].message.content);
         },
