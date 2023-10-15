@@ -16,6 +16,9 @@ import { PaymentModule } from './payment/payment.module';
     TelegrafModule.forRootAsync({
       useFactory: () => ({
         token: config.get<string>('BOT_TOKEN'),
+        options: {
+          handlerTimeout: Infinity,
+        },
       }),
     }),
     OpenaiModule.registerAsync({
