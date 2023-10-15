@@ -36,3 +36,7 @@ lerna-debug.log*
 
 # Application
 .env
+./microservices/subscription_service/proto
+./client/proto
+./microservices/subscription_service/.env
+./client/.env
