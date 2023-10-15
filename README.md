@@ -1,13 +1,28 @@
 # AI Telegram bot with power of ChatGPT
-That project was written to organize communication between ChatGPT and Telegram users
-There is much stuff to do, so i will be glad if you want to fork my project and update it!
+
+This project was written to organize communication between ChatGPT and Telegram users.
+There is still a lot of work to be done, so I would be glad if you want to fork my project and update it!
+
+#### Stack
+
+- Node(18x)
+- Typescript
+- GRPC
+- Postgres
+- Redis
+- TypeORM
+- Telegraf
 
 ____
+
 ## Requirements and prerequisites
+
 - Docker with compose plugin
 - Correctly configured .env file
 - Almost any unix system (tested on ubuntu)
+
 ____
+
 1. Run this:
    ``` bash
        cp .env.example .env
@@ -20,17 +35,23 @@ ____
    ```bash
    docker compose up -d --build
    ```
-_It's recommended to use Alpine versions on NodeJS_
 
-# Making protos
-*Note*: Protos are built by default, but if you want to add something feel free to edit:)
+_It's recommended to use Alpine versions on Node.js_
 
-- First-steps
+## To use in dev purposes or without containerizing
 
-~~~ bash
-npm install -g grpc-tools
-~~~
-
-``` bash
-grpc_tools_node_protoc --proto_path=./proto --ts_proto_opt=useOptionals=repeated --ts_proto_opt=addNestjsRestParameter=true --ts_proto_opt=removeEnumPrefix=members --ts_proto_opt=returnObservable=true --ts_proto_opt=initializeFieldsAsUndefined=false --ts_proto_opt=unrecognizedEnum=false --ts_proto_opt=stringEnums=true --ts_proto_opt=fileSuffix=.pb --ts_proto_opt=nestJs=true --ts_proto_out=./proto/build --grpc_out=/proto/build --plugin=protoc-gen-grpc=`which grpc_tools_node_protoc_plugin` ./proto/subscription_service.proto
+```bash
+ln -s .env client
+ln -s .env microservices/subscription_service
 ```
+
+Then ensure you'd created all required instances(Redis and Postgres), added correct paths in env
+
+```
+yarn start:dev # In client/ and microservices/subscription_service/
+```
+
+## About GRPC communication:
+
+The proto files have been moved to a separate [repo](https://github.com/kopetann/ai_tg_bot_proto) (as all services use
+the same protos)
