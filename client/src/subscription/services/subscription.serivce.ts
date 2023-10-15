@@ -25,7 +25,6 @@ export class SubscriptionService implements OnModuleInit {
   public getUser(user: UserRequest): Observable<User> {
     return this.subscriptionService.getUser(user).pipe(
       map((res) => {
-        console.log(res);
         return res;
       }),
     );
