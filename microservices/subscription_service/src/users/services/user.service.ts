@@ -2,15 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UserEntity } from '../entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  catchError,
-  from,
-  map,
-  Observable,
-  of,
-  Subject,
-  switchMap,
-} from 'rxjs';
+import { catchError, from, map, Observable, of, switchMap } from 'rxjs';
 import { UserRequestDto } from '../dto/user.request.dto';
 import { RpcException } from '@nestjs/microservices';
 import {
@@ -18,7 +10,7 @@ import {
   AddSubscriptionResponse,
   HasActiveSubscriptionResponse,
   UserRole,
-} from '../../proto/build/user.pb';
+} from 'ai_tg_bot_proto';
 
 @Injectable()
 export class UserService {

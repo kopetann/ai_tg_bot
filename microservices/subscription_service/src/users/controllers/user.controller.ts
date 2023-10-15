@@ -1,17 +1,15 @@
 import { Controller } from '@nestjs/common';
-import { Observable, tap } from 'rxjs';
+import { Observable } from 'rxjs';
 import { GrpcMethod } from '@nestjs/microservices';
 import { UserService } from '../services/user.service';
 import { UserRequestDto } from '../dto/user.request.dto';
-import { AddSubscriptionResponseInterface } from '../interfaces/add.subscription.response.interface';
 import {
   AddSubscriptionRequest,
   AddSubscriptionResponse,
   ExtIdRequest,
   HasActiveSubscriptionResponse,
   User,
-} from '../../proto/build/user.pb';
-import { log } from '@grpc/grpc-js/build/src/logging';
+} from 'ai_tg_bot_proto';
 
 @Controller()
 export class UserController {

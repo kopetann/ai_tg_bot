@@ -30,7 +30,15 @@ class Config {
     return addReflectionToGrpcConfig(
       this.getGrpcOptionsObject({
         url: this.get('GRPC_APPLICATION_URL', '0.0.0.0:50051'),
-        protoPath: join(__dirname, '..', 'proto', 'subscription_service.proto'),
+        protoPath: join(
+          __dirname,
+          '..',
+          '..',
+          'node_modules',
+          'ai_tg_bot_proto',
+          'proto',
+          'subscription_service.proto',
+        ),
         package: 'subscription_service',
       }),
     );

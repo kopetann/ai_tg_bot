@@ -15,7 +15,7 @@ import { ValidationPipe } from '@nestjs/common';
     }),
   );
 
-  await app.listen().then((res) => {
+  await app.listen().then(() => {
     console.log('Microservice is listening');
   });
 })();

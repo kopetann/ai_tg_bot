@@ -1,7 +1,7 @@
 import { Column, Entity } from 'typeorm';
 import { CommonEntity } from '../../common/entities/common.entity';
 import { config } from '../../common/config';
-import { User, UserRole } from '../../proto/build/user.pb';
+import { User, UserRole } from 'ai_tg_bot_proto';
 
 @Entity('users')
 export class UserEntity extends CommonEntity implements User {
