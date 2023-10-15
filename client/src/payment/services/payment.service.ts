@@ -5,11 +5,10 @@ import { PaymentDto } from '../dto/payment.dto';
 import { UserService } from '../../users/services/user.service';
 import { map, Observable, of, switchMap } from 'rxjs';
 import { RpcException } from '@nestjs/microservices';
-import { AxiosResponse } from 'axios';
 import { PaymentResponseInterface } from '../interfaces/payment.response.interface';
 import { InjectBot } from 'nestjs-telegraf';
 import { Telegraf } from 'telegraf';
-import { HasActiveSubscriptionResponse } from '../../proto/build/user.pb';
+import { HasActiveSubscriptionResponse } from 'ai_tg_bot_proto';
 
 @Injectable()
 export class PaymentService {
@@ -50,7 +49,7 @@ export class PaymentService {
               },
             )
             .pipe(
-              map((res: AxiosResponse<PaymentResponseInterface>) => {
+              map((res) => {
                 return res.data;
               }),
             );

@@ -14,6 +14,7 @@ import {
   InternalServerErrorException,
   UseFilters,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import * as ffmpeg from 'fluent-ffmpeg';
 import { join } from 'path';
@@ -24,14 +25,16 @@ import { UserHasLimitGuard } from '../../common/guards/user.has.limit.guard';
 import { Utils } from '../../common/utils';
 import { PaymentService } from '../../payment/services/payment.service';
 import { PaymentResponseInterface } from '../../payment/interfaces/payment.response.interface';
-import { User } from '../../proto/build/user.pb';
+import { User } from 'ai_tg_bot_proto';
 import { TelegrafExceptionFilter } from '../../common/filters/telegraf.exception.filter';
 import { BotsGuard } from '../../common/guards/bots.guard';
 import { SubscriptionInterface } from '../interfaces/subscription.interface';
 import { RedisService } from '../../redis/redis.service';
 import { Roles, RolesInterface } from '../../common/interfaces/roles.interface';
+import { IsBotBlockedInterceptor } from '../../common/interceptors/is.bot.blocked.interceptor';
 
 @Update()
+@UseInterceptors(IsBotBlockedInterceptor)
 @UseGuards(BotsGuard)
 @UseFilters(TelegrafExceptionFilter)
 export class BotHandler {
@@ -48,7 +51,7 @@ export class BotHandler {
     @Ctx() ctx,
     @Sender('username') username: string,
     @Sender('first_name') firstName: string,
-  ): Promise<void> {
+  ) {
     const template =
       `Привет, ${username ?? firstName.trim()}! 😃` +
       '\n\n' +
@@ -63,7 +66,7 @@ export class BotHandler {
       '\n' +
       'И многое другое. Поехали 😉';
 
-    await ctx.reply(template, {
+    ctx.reply(template, {
       parse_mode: 'HTML',
       ...this.userService.getCommonKeyboard(),
     });
@@ -101,7 +104,7 @@ export class BotHandler {
         metadata: {
           user_id: extId,
           date: Utils.dateWithOffsetDays(subscription.duration).getTime(),
-          name: name,
+          name,
           userName: userName ?? '',
         },
       })
@@ -125,47 +128,6 @@ export class BotHandler {
           ]),
         );
       });
-  }
-
-  private resetUserHistory(userId: number): Promise<void> {
-    return this.redisService.del(userId.toString());
-  }
-
-  private async addToHistoryAndReturn(
-    userId: number,
-    userMessage?: string,
-    botAnswer?: string,
-  ): Promise<RolesInterface[]> {
-    try {
-      let history: RolesInterface[] = await this.redisService.get<
-        RolesInterface[]
-      >(userId.toString());
-
-      if (!history) history = [];
-
-      const content: RolesInterface = { content: '', role: undefined };
-
-      if (
-        (!history.length || history[history.length - 1].role === 'user') &&
-        botAnswer
-      ) {
-        content.role = <Roles>'system';
-        content.content = botAnswer;
-      } else if (
-        (!history.length || history[history.length - 1]?.role === 'system') &&
-        userMessage
-      ) {
-        content.role = <Roles>'user';
-        content.content = userMessage;
-      } else {
-        return history;
-      }
-      history.push(content);
-      await this.redisService.set(userId.toString(), history);
-      return history;
-    } catch (e) {
-      console.error(e);
-    }
   }
 
   @Hears(['Подписка'])
@@ -208,23 +170,32 @@ export class BotHandler {
   @On('text')
   @UseGuards(UserHasLimitGuard)
   public async onMessage(@Ctx() ctx: Context): Promise<void> {
-    ctx.sendChatAction('typing').then(() => {
-      ctx.sendChatAction('typing');
-    });
+    ctx.sendChatAction('typing');
     const history: RolesInterface[] = await this.addToHistoryAndReturn(
       ctx.from.id,
       ctx.message['text'],
     );
 
-    return this.openAiService.makeChatRequest(history).then((res) => {
-      this.userService.removeFreeRequest(ctx.from.id).subscribe();
-      this.addToHistoryAndReturn(
-        ctx.from.id,
-        '',
-        res.data.choices[0].message.content,
+    try {
+      await this.openAiService.makeChatRequest(history);
+      return this.openAiService.makeChatRequest(history).then(async (res) => {
+        this.userService.removeFreeRequest(ctx.from.id).subscribe();
+
+        await this.addToHistoryAndReturn(
+          ctx.from.id,
+          '',
+          res.choices[0].message.content,
+        );
+
+        await ctx.reply(res.choices[0].message.content);
+      });
+    } catch (e) {
+      console.error(e);
+      await ctx.reply(
+        'Извините, что-то сломалось, пожалуйста, отправьте Ваш запрос еще раз',
       );
-      ctx.reply(res.data.choices[0].message.content);
-    });
+      return;
+    }
   }
 
   @On('voice')
@@ -241,12 +212,53 @@ export class BotHandler {
           );
           const response = await this.openAiService.makeChatRequest(history);
           this.userService.removeFreeRequest(ctx.from.id).subscribe();
-          ctx.reply(response.data.choices[0].message.content);
+          ctx.reply(response.choices[0].message.content);
         },
       );
     } catch (e) {
       console.error(e);
       ctx.reply('Извините, что-то сломалось');
+    }
+  }
+
+  private resetUserHistory(userId: number): Promise<void> {
+    return this.redisService.del(userId.toString());
+  }
+
+  private async addToHistoryAndReturn(
+    userId: number,
+    userMessage?: string,
+    botAnswer?: string,
+  ): Promise<RolesInterface[]> {
+    try {
+      let history: RolesInterface[] = await this.redisService.get<
+        RolesInterface[]
+      >(userId.toString());
+
+      if (!history) history = [];
+
+      const content: RolesInterface = { content: '', role: undefined };
+
+      if (
+        (!history.length || history[history.length - 1].role === 'user') &&
+        botAnswer
+      ) {
+        content.role = <Roles>'system';
+        content.content = botAnswer;
+      } else if (
+        (!history.length || history[history.length - 1]?.role === 'system') &&
+        userMessage
+      ) {
+        content.role = <Roles>'user';
+        content.content = userMessage;
+      } else {
+        return history;
+      }
+      history.push(content);
+      await this.redisService.set(userId.toString(), history);
+      return history;
+    } catch (e) {
+      console.error(e);
     }
   }
 

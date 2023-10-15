@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { OpenAiService } from './openai.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ChatGptService {
-  constructor(private readonly openAiService: OpenAiService) {}
+  constructor(
+    private readonly openAiService: OpenAiService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async getText(text: string) {
     const response = await fetch(

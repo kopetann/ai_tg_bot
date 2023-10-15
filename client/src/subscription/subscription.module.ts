@@ -2,9 +2,9 @@ import { forwardRef, Module } from '@nestjs/common';
 import { SubscriptionService } from './services/subscription.serivce';
 import { ClientsModule, GrpcOptions, Transport } from '@nestjs/microservices';
 import { config } from '../common/config';
-import { join } from 'path';
 import { SubscriptionHandler } from './services/subscription.handler';
 import { UserModule } from '../users/user.module';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -21,10 +21,20 @@ import { UserModule } from '../users/user.module';
             protoPath: join(
               __dirname,
               '..',
+              '..',
+              'node_modules',
+              'ai_tg_bot_proto',
               'proto',
               'subscription_service.proto',
             ),
             package: 'subscription_service',
+            loader: {
+              keepCase: true,
+              longs: String,
+              enums: String,
+              defaults: true,
+              oneofs: true,
+            },
           },
         }),
       },

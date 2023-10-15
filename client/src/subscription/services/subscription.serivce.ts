@@ -1,14 +1,14 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
-import { Observable } from 'rxjs';
-import { SubscriptionServiceClient } from '../../proto/build/subscription_service.pb';
+import { map, Observable } from 'rxjs';
 import {
   AddSubscriptionRequest,
   AddSubscriptionResponse,
   HasActiveSubscriptionResponse,
+  SubscriptionServiceClient,
   User,
   UserRequest,
-} from '../../proto/build/user.pb';
+} from 'ai_tg_bot_proto';
 
 @Injectable()
 export class SubscriptionService implements OnModuleInit {
@@ -23,7 +23,12 @@ export class SubscriptionService implements OnModuleInit {
   }
 
   public getUser(user: UserRequest): Observable<User> {
-    return this.subscriptionService.getUser(user);
+    return this.subscriptionService.getUser(user).pipe(
+      map((res) => {
+        console.log(res);
+        return res;
+      }),
+    );
   }
 
   public removeFreeRequest(extId: number): Observable<AddSubscriptionResponse> {

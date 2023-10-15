@@ -3,7 +3,7 @@ import { Observable, of, switchMap, take } from 'rxjs';
 import { UserService } from '../../users/services/user.service';
 import { TelegrafExecutionContext } from 'nestjs-telegraf';
 import { Context } from 'telegraf';
-import { User, UserRole } from '../../proto/build/user.pb';
+import { User, UserRole } from 'ai_tg_bot_proto';
 
 export class UserHasLimitGuard implements CanActivate {
   constructor(@Inject(UserService) private readonly userService: UserService) {}

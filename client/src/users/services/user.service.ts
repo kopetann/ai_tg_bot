@@ -6,7 +6,7 @@ import {
   AddSubscriptionResponse,
   HasActiveSubscriptionResponse,
   User,
-} from '../../proto/build/user.pb';
+} from 'ai_tg_bot_proto';
 import { Markup } from 'telegraf';
 import { SubscriptionService } from '../../subscription/services/subscription.serivce';
 
