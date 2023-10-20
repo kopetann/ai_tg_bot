@@ -182,13 +182,13 @@ export class BotHandler {
   @On('text')
   @UseGuards(UserHasLimitGuard)
   public async onMessage(@Ctx() ctx: Context): Promise<void> {
-    ctx.sendChatAction('typing');
-    const history: RolesInterface[] = await this.addToHistoryAndReturn(
-      ctx.from.id,
-      ctx.message['text'],
-    );
-
     try {
+      await ctx.sendChatAction('typing');
+      const history: RolesInterface[] = await this.addToHistoryAndReturn(
+        ctx.from.id,
+        ctx.message['text'],
+      );
+
       await this.openAiService.makeChatRequest(history);
       return this.openAiService.makeChatRequest(history).then(async (res) => {
         this.userService.removeFreeRequest(ctx.from.id).subscribe();
@@ -199,7 +199,9 @@ export class BotHandler {
           res.choices[0].message.content,
         );
 
-        await ctx.reply(res.choices[0].message.content);
+        await ctx.reply(res.choices[0].message.content).catch((err) => {
+          console.log(err);
+        });
       });
     } catch (e) {
       console.error(e);
@@ -210,7 +212,7 @@ export class BotHandler {
   @UseGuards(UserHasLimitGuard)
   public async onVoice(@Ctx() ctx): Promise<void> {
     try {
-      ctx.sendChatAction('typing');
+      await ctx.sendChatAction('typing');
       const file = await ctx.telegram.getFileLink(ctx.message.voice.file_id);
       this.transcryptAudio(file.href, ctx.message.from.id).subscribe(
         async (res: string): Promise<void> => {
@@ -220,7 +222,9 @@ export class BotHandler {
           );
           const response = await this.openAiService.makeChatRequest(history);
           this.userService.removeFreeRequest(ctx.from.id).subscribe();
-          ctx.reply(response.choices[0].message.content);
+          ctx
+            .reply(response.choices[0].message.content)
+            .catch((err) => console.error(err));
         },
       );
     } catch (e) {
