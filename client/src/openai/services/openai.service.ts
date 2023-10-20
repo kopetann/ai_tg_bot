@@ -4,8 +4,9 @@ import { ConnectOpenAiInterface } from '../interfaces/connect.openai.interface';
 import { OpenAI } from 'openai';
 import * as fs from 'fs';
 import { config } from '../../common/config';
-import { VoiceTranscriptionResponseInterface } from '../interfaces/voice.transcription.response.interface';
 import { RolesInterface } from '../../common/interfaces/roles.interface';
+import { Transcriptions } from 'openai/resources/audio';
+import Transcription = Transcriptions.Transcription;
 
 @Injectable()
 export class OpenAiService {
@@ -30,11 +31,12 @@ export class OpenAiService {
 
   public async transcribe(file: string): Promise<string> {
     try {
-      return this.__openai
-        .createTranscription(fs.createReadStream(file) as any, 'whisper-1')
-        .then(
-          (response: VoiceTranscriptionResponseInterface) => response.data.text,
-        );
+      return this.__openai.audio.transcriptions
+        .create({
+          file: fs.createReadStream(file) as any,
+          model: 'whisper-1',
+        })
+        .then((response: Transcription) => response.text);
     } catch (e) {
       console.error(e.message);
     }

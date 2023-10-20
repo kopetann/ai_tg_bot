@@ -52,24 +52,28 @@ export class BotHandler {
     @Sender('username') username: string,
     @Sender('first_name') firstName: string,
   ) {
-    const template =
-      `Привет, ${username ?? firstName.trim()}! 😃` +
-      '\n\n' +
-      'Я твой универсальный помощник на основе ChatGPT 4 🌟\n' +
-      '\n' +
-      'Спроси меня о чем хочешь, я знаю все, например:\n' +
-      '\n' +
-      '🗣 Расскажи анекдот или историю\n' +
-      '📝 Помоги в решении домашнего задания\n' +
-      '🍲 Спланируй мне рацион для похудения\n' +
-      '🚗 Предложи классный маршрут для путешествия\n' +
-      '\n' +
-      'И многое другое. Поехали 😉';
+    try {
+      const template =
+        `Привет, ${username ?? firstName.trim()}! 😃` +
+        '\n\n' +
+        'Я твой универсальный помощник на основе ChatGPT 4 🌟\n' +
+        '\n' +
+        'Спроси меня о чем хочешь, я знаю все, например:\n' +
+        '\n' +
+        '🗣 Расскажи анекдот или историю\n' +
+        '📝 Помоги в решении домашнего задания\n' +
+        '🍲 Спланируй мне рацион для похудения\n' +
+        '🚗 Предложи классный маршрут для путешествия\n' +
+        '\n' +
+        'И многое другое. Поехали 😉';
 
-    ctx.reply(template, {
-      parse_mode: 'HTML',
-      ...this.userService.getCommonKeyboard(),
-    });
+      ctx.reply(template, {
+        parse_mode: 'HTML',
+        ...this.userService.getCommonKeyboard(),
+      });
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   @Action(['week', 'month'])
@@ -95,71 +99,79 @@ export class BotHandler {
 
     const template = `Подписка на ${subscription.word} общения с ассистентом 🙂\nВходит:\n🌟Неограниченное количество вопросов\n⏳Доступ к общению 24/7\n🧑‍💻Технически поддержу тебя\n💸Удобная оплата`;
 
-    this.paymentService
-      .createPayment({
-        amount: {
-          value: subscription.price,
-          currency: 'RUB',
-        },
-        metadata: {
-          user_id: extId,
-          date: Utils.dateWithOffsetDays(subscription.duration).getTime(),
-          name,
-          userName: userName ?? '',
-        },
-      })
-      .pipe(
-        catchError((err: Record<string, any>) => {
-          ctx.reply(`${err}`, this.userService.getCommonKeyboard());
-          return of();
-        }),
-      )
-      .subscribe((res: PaymentResponseInterface) => {
-        this.paymentService.checkForStatusUpdate(res.id);
-        ctx.reply(
-          template,
-          Markup.inlineKeyboard([
-            [
-              Markup.button.url(
-                `Оплатить подписку - ${subscription.price} руб`,
-                res.confirmation.confirmation_url,
-              ),
-            ],
-          ]),
-        );
-      });
+    try {
+      this.paymentService
+        .createPayment({
+          amount: {
+            value: subscription.price,
+            currency: 'RUB',
+          },
+          metadata: {
+            user_id: extId,
+            date: Utils.dateWithOffsetDays(subscription.duration).getTime(),
+            name,
+            userName: userName ?? '',
+          },
+        })
+        .pipe(
+          catchError((err: Record<string, any>) => {
+            ctx.reply(`${err}`, this.userService.getCommonKeyboard());
+            return of();
+          }),
+        )
+        .subscribe((res: PaymentResponseInterface) => {
+          this.paymentService.checkForStatusUpdate(res.id);
+          ctx.reply(
+            template,
+            Markup.inlineKeyboard([
+              [
+                Markup.button.url(
+                  `Оплатить подписку - ${subscription.price} руб`,
+                  res.confirmation.confirmation_url,
+                ),
+              ],
+            ]),
+          );
+        });
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   @Hears(['Подписка'])
   @Action('subscription')
   public sendSubs(@Ctx() ctx: Context) {
-    return this.userService
-      .getUser({
-        extId: ctx.from.id,
-        userName: ctx.from.username,
-        name: ctx.from.first_name,
-      })
-      .pipe(
-        switchMap((user: User) => {
-          if (
-            !user.subscriptionDate ||
-            new Date(parseInt(user.subscriptionDate)) < new Date()
-          ) {
+    try {
+      return this.userService
+        .getUser({
+          extId: ctx.from.id,
+          userName: ctx.from.username,
+          name: ctx.from.first_name,
+        })
+        .pipe(
+          switchMap((user: User) => {
+            if (
+              !user.subscriptionDate ||
+              new Date(parseInt(user.subscriptionDate)) < new Date()
+            ) {
+              ctx.reply(
+                `Количество запросов ко мне: ${user.freeRequests}\nДля безграничного общения со мной, пожалуйста, оформи подписку 👍`,
+                this.userService.getSubscriptionKeyboard(),
+              );
+              return of(0);
+            }
             ctx.reply(
-              `Количество запросов ко мне: ${user.freeRequests}\nДля безграничного общения со мной, пожалуйста, оформи подписку 👍`,
-              this.userService.getSubscriptionKeyboard(),
+              `Количество запросов ко мне: без ограничений\nДата окончания: ${Utils.getFullDate(
+                user.subscriptionDate,
+              )}`,
+              this.userService.getCommonKeyboard(),
             );
             return of(0);
-          }
-          ctx.reply(
-            `Количество запросов ко мне: без ограничений\nДата окончания: ${Utils.getFullDate(
-              user.subscriptionDate,
-            )}`,
-            this.userService.getCommonKeyboard(),
-          );
-          return of(0);
-        }),
-      );
+          }),
+        );
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   @On('sticker')
@@ -191,10 +203,6 @@ export class BotHandler {
       });
     } catch (e) {
       console.error(e);
-      await ctx.reply(
-        'Извините, что-то сломалось, пожалуйста, отправьте Ваш запрос еще раз',
-      );
-      return;
     }
   }
 
@@ -217,7 +225,6 @@ export class BotHandler {
       );
     } catch (e) {
       console.error('Error', e);
-      ctx.reply('Извините, что-то сломалось');
     }
   }
 
