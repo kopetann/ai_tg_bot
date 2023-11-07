@@ -1,12 +1,13 @@
-import { ArgumentsHost } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { TelegrafArgumentsHost } from 'nestjs-telegraf';
 import { Context } from 'telegraf';
 
-export class TelegrafExceptionFilter implements TelegrafExceptionFilter {
+@Catch()
+export class TelegrafExceptionFilter implements ExceptionFilter {
   async catch(exception: Error, host: ArgumentsHost): Promise<void> {
-    const telegrafArgumentHost = TelegrafArgumentsHost.create(host);
-    console.log(exception);
-    const ctx = telegrafArgumentHost.getContext<Context>();
-    return;
+    const telegrafHost = TelegrafArgumentsHost.create(host);
+    const ctx = telegrafHost.getContext<Context>();
+
+    console.error(exception.message);
   }
 }

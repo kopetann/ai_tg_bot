@@ -17,6 +17,9 @@ import { PaymentModule } from './payment/payment.module';
       useFactory: () => ({
         token: config.get<string>('BOT_TOKEN'),
         options: {
+          telegram: {
+            webhookReply: true,
+          },
           handlerTimeout: Infinity,
         },
       }),

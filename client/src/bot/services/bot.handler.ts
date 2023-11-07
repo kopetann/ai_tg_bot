@@ -14,7 +14,6 @@ import {
   InternalServerErrorException,
   UseFilters,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import * as ffmpeg from 'fluent-ffmpeg';
 import { join } from 'path';
@@ -31,10 +30,8 @@ import { BotsGuard } from '../../common/guards/bots.guard';
 import { SubscriptionInterface } from '../interfaces/subscription.interface';
 import { RedisService } from '../../redis/redis.service';
 import { Roles, RolesInterface } from '../../common/interfaces/roles.interface';
-import { IsBotBlockedInterceptor } from '../../common/interceptors/is.bot.blocked.interceptor';
 
 @Update()
-@UseInterceptors(IsBotBlockedInterceptor)
 @UseGuards(BotsGuard)
 @UseFilters(TelegrafExceptionFilter)
 export class BotHandler {
@@ -199,9 +196,7 @@ export class BotHandler {
           res.choices[0].message.content,
         );
 
-        await ctx.reply(res.choices[0].message.content).catch((err) => {
-          console.log(err);
-        });
+        await ctx.reply(res.choices[0].message.content);
       });
     } catch (e) {
       console.error(e);
